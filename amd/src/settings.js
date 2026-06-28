@@ -6,6 +6,44 @@
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 define(['jquery', 'core/config'], function($, cfg) {
+    /**
+     * Restores saved configuration into the theme picker.
+     *
+     * @param {Object} textarea The Moodle config textarea element
+     * @param {HTMLElement} picker The theme picker element
+     */
+    function restoreConfig(textarea, picker) {
+        var val = textarea.val();
+        if (!val || val.trim() === '') {
+            return;
+        }
+        var savedConfig = JSON.parse(val);
+
+        if (savedConfig.theme) {
+            picker.setAttribute('theme-name', savedConfig.theme);
+        }
+        if (savedConfig.density) {
+            picker.setAttribute('density', savedConfig.density);
+        }
+        // Restore custom colors if using custom theme
+        if (savedConfig.theme !== 'custom' || !savedConfig.colors) {
+            return;
+        }
+        var colors = savedConfig.colors;
+        if (colors['--h5p-theme-main-cta-base']) {
+            picker.setAttribute('custom-color-buttons', colors['--h5p-theme-main-cta-base']);
+        }
+        if (colors['--h5p-theme-secondary-cta-base']) {
+            picker.setAttribute('custom-color-navigation', colors['--h5p-theme-secondary-cta-base']);
+        }
+        if (colors['--h5p-theme-alternative-base']) {
+            picker.setAttribute('custom-color-alternative', colors['--h5p-theme-alternative-base']);
+        }
+        if (colors['--h5p-theme-background']) {
+            picker.setAttribute('custom-color-background', colors['--h5p-theme-background']);
+        }
+    }
+
     return {
         init: function() {
             // Dynamically load the h5p-theme-picker JS module
@@ -24,34 +62,7 @@ define(['jquery', 'core/config'], function($, cfg) {
 
                     // Try to restore previous values from the saved textarea value
                     try {
-                        var val = textarea.val();
-                        if (val && val.trim() !== '') {
-                            var savedConfig = JSON.parse(val);
-
-                            if (savedConfig.theme) {
-                                picker.setAttribute('theme-name', savedConfig.theme);
-                            }
-                            if (savedConfig.density) {
-                                picker.setAttribute('density', savedConfig.density);
-                            }
-                            // Restore custom colors if using custom theme
-                            if (savedConfig.theme === 'custom' && savedConfig.colors) {
-                                if (savedConfig.colors['--h5p-theme-main-cta-base']) {
-                                    picker.setAttribute('custom-color-buttons', savedConfig.colors['--h5p-theme-main-cta-base']);
-                                }
-                                if (savedConfig.colors['--h5p-theme-secondary-cta-base']) {
-                                    picker.setAttribute('custom-color-navigation',
-                                        savedConfig.colors['--h5p-theme-secondary-cta-base']);
-                                }
-                                if (savedConfig.colors['--h5p-theme-alternative-base']) {
-                                    picker.setAttribute('custom-color-alternative',
-                                        savedConfig.colors['--h5p-theme-alternative-base']);
-                                }
-                                if (savedConfig.colors['--h5p-theme-background']) {
-                                    picker.setAttribute('custom-color-background', savedConfig.colors['--h5p-theme-background']);
-                                }
-                            }
-                        }
+                        restoreConfig(textarea, picker);
                     } catch (e) {
                         // Ignore parse errors on init.
                     }

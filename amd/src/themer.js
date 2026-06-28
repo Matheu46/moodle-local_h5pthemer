@@ -15,6 +15,63 @@ define(['jquery'], function($) {
                 var config = pluginConfig || {};
 
                 /**
+                 * Injects custom CSS variables into the iframe document's head.
+                 *
+                 * @param {HTMLDocument} doc The iframe document
+                 * @param {Object} colors The colors configuration object
+                 */
+                function injectCustomColors(doc, colors) {
+                    if (!colors || typeof colors !== 'object') {
+                        return;
+                    }
+                    var styleId = 'h5p-themer-custom-colors';
+                    var styleEl = doc.getElementById(styleId);
+
+                    if (styleEl) {
+                        return;
+                    }
+
+                    var css = ':root {\n';
+                    Object.entries(colors).forEach(function([key, value]) {
+                        if (key.startsWith('--h5p-theme-') && typeof value === 'string') {
+                            css += '  ' + key + ': ' + value + ' !important;\n';
+                        }
+                    });
+                    css += '}\n';
+
+                    styleEl = doc.createElement('style');
+                    styleEl.id = styleId;
+                    styleEl.type = 'text/css';
+                    styleEl.appendChild(doc.createTextNode(css));
+                    doc.head.appendChild(styleEl);
+                }
+
+                /**
+                 * Applies density class and triggers H5P resize.
+                 *
+                 * @param {Window} win The iframe window object
+                 * @param {HTMLElement} h5pContent The .h5p-content element
+                 * @param {string} density The density setting
+                 */
+                function applyDensitySettings(win, h5pContent, density) {
+                    var densityClass = density ? 'h5p-' + density : '';
+                    if (densityClass === '' || !VALID_DENSITY_CLASSES.includes(densityClass)) {
+                        return;
+                    }
+                    // Remove old density classes
+                    VALID_DENSITY_CLASSES.forEach(function(cls) {
+                        h5pContent.classList.remove(cls);
+                    });
+                    // Add new density class
+                    h5pContent.classList.add(densityClass);
+
+                    // Trigger resize so H5P adapts to the new density widths/heights
+                    if (win.H5P && win.H5P.instances && win.H5P.instances[0]) {
+                        win.H5P.instances[0].trigger('resize');
+                    }
+                }
+
+                /**
                  * Processes an iframe to inject colors and density.
                  *
                  * @param {HTMLIFrameElement} iframe The iframe element to process
@@ -29,27 +86,8 @@ define(['jquery'], function($) {
                             return false; // Not fully ready
                         }
 
-                        // 1. Inject Colors via a <style> tag in the head
-                        if (config.colors && typeof config.colors === 'object') {
-                            var styleId = 'h5p-themer-custom-colors';
-                            var styleEl = doc.getElementById(styleId);
-
-                            if (!styleEl) {
-                                var css = ':root {\n';
-                                Object.entries(config.colors).forEach(function([key, value]) {
-                                    if (key.startsWith('--h5p-theme-') && typeof value === 'string') {
-                                        css += '  ' + key + ': ' + value + ' !important;\n';
-                                    }
-                                });
-                                css += '}\n';
-
-                                styleEl = doc.createElement('style');
-                                styleEl.id = styleId;
-                                styleEl.type = 'text/css';
-                                styleEl.appendChild(doc.createTextNode(css));
-                                doc.head.appendChild(styleEl);
-                            }
-                        }
+                        // 1. Inject Colors
+                        injectCustomColors(doc, config.colors);
 
                         // Look for nested iframes (e.g. core_h5p often nests h5p-iframe inside h5p-player)
                         var innerIframes = doc.querySelectorAll('iframe.h5p-iframe, iframe.h5p-player');
@@ -63,7 +101,7 @@ define(['jquery'], function($) {
 
                         var h5pContent = doc.querySelector('.h5p-content');
                         if (!h5pContent) {
-                            return false; // h5p-content not created yet
+                            return false; // The h5p-content is not created yet.
                         }
 
                         // Check if density is already applied correctly
@@ -75,25 +113,13 @@ define(['jquery'], function($) {
                         }
 
                         // Also verify if we've explicitly marked it as processed
-                        if (h5pContent._h5p_themer_applied && hasCorrectDensity) {
+                        if (h5pContent.h5pThemerApplied && hasCorrectDensity) {
                             return true; // We are completely done with this iframe
                         }
 
-                        if (densityClass !== '' && VALID_DENSITY_CLASSES.includes(densityClass)) {
-                            // Remove old density classes
-                            VALID_DENSITY_CLASSES.forEach(function(cls) {
-                                h5pContent.classList.remove(cls);
-                            });
-                            // Add new density class
-                            h5pContent.classList.add(densityClass);
+                        applyDensitySettings(win, h5pContent, density);
 
-                            // Trigger resize so H5P adapts to the new density widths/heights
-                            if (win.H5P && win.H5P.instances && win.H5P.instances[0]) {
-                                win.H5P.instances[0].trigger('resize');
-                            }
-                        }
-
-                        h5pContent._h5p_themer_applied = true;
+                        h5pContent.h5pThemerApplied = true;
 
                         // If this iframe has inner nested iframes, we shouldn't consider
                         // it completely "done" until those inner iframes are also processed.
@@ -101,7 +127,8 @@ define(['jquery'], function($) {
                         // inner ones have their own polling interval now.
                         return true; // Finished successfully
 
-                    } catch (e) { return false;
+                    } catch (e) {
+                        return false;
                     }
                 }
 
@@ -111,21 +138,21 @@ define(['jquery'], function($) {
                  * @param {HTMLIFrameElement} iframe The iframe element to poll
                  */
                 function setupPolling(iframe) {
-                    if (iframe._h5p_themer_interval) {
+                    if (iframe.h5pThemerInterval) {
                         return; // Already polling this iframe
                     }
 
                     // Poll the iframe during its load
-                    iframe._h5p_themer_interval = setInterval(function() {
+                    iframe.h5pThemerInterval = setInterval(function() {
                         var isFullyApplied = processIframe(iframe);
                         if (isFullyApplied) {
-                            clearInterval(iframe._h5p_themer_interval);
+                            clearInterval(iframe.h5pThemerInterval);
                         }
                     }, 250);
 
                     // Failsafe: stop polling after 15 seconds to save CPU
                     setTimeout(function() {
-                        clearInterval(iframe._h5p_themer_interval);
+                        clearInterval(iframe.h5pThemerInterval);
                     }, 15000);
 
                     $(iframe).on('load', function() {
@@ -153,7 +180,7 @@ define(['jquery'], function($) {
                     });
                 });
 
-                observer.observe(document.body, { childList: true, subtree: true });
+                observer.observe(document.body, {childList: true, subtree: true});
             });
         }
     };
