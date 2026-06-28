@@ -19,16 +19,15 @@ define(['jquery', 'core/config'], function($, cfg) {
                 if (textarea.length) {
                     // Hide the textarea to replace it with our picker
                     textarea.hide();
-                    textarea.parent().append('<p><small>Abaixo está o Theme Picker. Suas escolhas atualizarão a configuração do Moodle de forma transparente.</small></p>');
 
                     var picker = document.createElement('h5p-theme-picker');
-                    
+
                     // Try to restore previous values from the saved textarea value
                     try {
                         var val = textarea.val();
                         if (val && val.trim() !== '') {
                             var savedConfig = JSON.parse(val);
-                            
+
                             if (savedConfig.theme) {
                                 picker.setAttribute('theme-name', savedConfig.theme);
                             }
@@ -41,10 +40,12 @@ define(['jquery', 'core/config'], function($, cfg) {
                                     picker.setAttribute('custom-color-buttons', savedConfig.colors['--h5p-theme-main-cta-base']);
                                 }
                                 if (savedConfig.colors['--h5p-theme-secondary-cta-base']) {
-                                    picker.setAttribute('custom-color-navigation', savedConfig.colors['--h5p-theme-secondary-cta-base']);
+                                    picker.setAttribute('custom-color-navigation',
+                                        savedConfig.colors['--h5p-theme-secondary-cta-base']);
                                 }
                                 if (savedConfig.colors['--h5p-theme-alternative-base']) {
-                                    picker.setAttribute('custom-color-alternative', savedConfig.colors['--h5p-theme-alternative-base']);
+                                    picker.setAttribute('custom-color-alternative',
+                                        savedConfig.colors['--h5p-theme-alternative-base']);
                                 }
                                 if (savedConfig.colors['--h5p-theme-background']) {
                                     picker.setAttribute('custom-color-background', savedConfig.colors['--h5p-theme-background']);
@@ -52,7 +53,7 @@ define(['jquery', 'core/config'], function($, cfg) {
                             }
                         }
                     } catch (e) {
-                        console.warn("H5P Themer: could not parse previous configuration", e);
+                        // Ignore parse errors on init.
                     }
 
                     // Insert the picker into the DOM

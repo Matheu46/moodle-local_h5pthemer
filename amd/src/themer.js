@@ -13,12 +13,18 @@ define(['jquery'], function($) {
         init: function(pluginConfig) {
             $(document).ready(function() {
                 var config = pluginConfig || {};
-                
+
+                /**
+                 * Processes an iframe to inject colors and density.
+                 *
+                 * @param {HTMLIFrameElement} iframe The iframe element to process
+                 * @returns {boolean} True if completely processed, false otherwise
+                 */
                 function processIframe(iframe) {
                     try {
                         var doc = iframe.contentDocument || iframe.contentWindow.document;
                         var win = iframe.contentWindow;
-                        
+
                         if (!doc || !doc.head || !doc.body) {
                             return false; // Not fully ready
                         }
@@ -27,7 +33,7 @@ define(['jquery'], function($) {
                         if (config.colors && typeof config.colors === 'object') {
                             var styleId = 'h5p-themer-custom-colors';
                             var styleEl = doc.getElementById(styleId);
-                            
+
                             if (!styleEl) {
                                 var css = ':root {\n';
                                 Object.entries(config.colors).forEach(function([key, value]) {
@@ -36,7 +42,7 @@ define(['jquery'], function($) {
                                     }
                                 });
                                 css += '}\n';
-                                
+
                                 styleEl = doc.createElement('style');
                                 styleEl.id = styleId;
                                 styleEl.type = 'text/css';
@@ -54,7 +60,7 @@ define(['jquery'], function($) {
                         // 2. Apply Density
                         var density = config.density || '';
                         var densityClass = density ? 'h5p-' + density : '';
-                        
+
                         var h5pContent = doc.querySelector('.h5p-content');
                         if (!h5pContent) {
                             return false; // h5p-content not created yet
@@ -80,30 +86,35 @@ define(['jquery'], function($) {
                             });
                             // Add new density class
                             h5pContent.classList.add(densityClass);
-                            
+
                             // Trigger resize so H5P adapts to the new density widths/heights
                             if (win.H5P && win.H5P.instances && win.H5P.instances[0]) {
                                 win.H5P.instances[0].trigger('resize');
                             }
                         }
-                        
+
                         h5pContent._h5p_themer_applied = true;
-                        
-                        // If this iframe has inner nested iframes, we shouldn't consider it completely "done" 
-                        // until those inner iframes are also processed. But we return true to stop polling 
-                        // the *outer* iframe, since the inner ones have their own polling interval now.
+
+                        // If this iframe has inner nested iframes, we shouldn't consider
+                        // it completely "done" until those inner iframes are also processed.
+                        // But we return true to stop polling the *outer* iframe, since the
+                        // inner ones have their own polling interval now.
                         return true; // Finished successfully
 
-                    } catch (e) {
-                        return false;
+                    } catch (e) { return false;
                     }
                 }
-                
+
+                /**
+                 * Sets up polling to check if an iframe is ready and process it.
+                 *
+                 * @param {HTMLIFrameElement} iframe The iframe element to poll
+                 */
                 function setupPolling(iframe) {
                     if (iframe._h5p_themer_interval) {
                         return; // Already polling this iframe
                     }
-                    
+
                     // Poll the iframe during its load
                     iframe._h5p_themer_interval = setInterval(function() {
                         var isFullyApplied = processIframe(iframe);
@@ -111,12 +122,12 @@ define(['jquery'], function($) {
                             clearInterval(iframe._h5p_themer_interval);
                         }
                     }, 250);
-                    
+
                     // Failsafe: stop polling after 15 seconds to save CPU
                     setTimeout(function() {
                         clearInterval(iframe._h5p_themer_interval);
                     }, 15000);
-                    
+
                     $(iframe).on('load', function() {
                         processIframe(iframe);
                     });
@@ -130,7 +141,7 @@ define(['jquery'], function($) {
                 };
 
                 processAllIframes();
-                
+
                 // Watch for dynamically added iframes (like in modals or ajax navigation)
                 var observer = new MutationObserver(function(mutations) {
                     mutations.forEach(function(mutation) {
@@ -141,7 +152,7 @@ define(['jquery'], function($) {
                         }
                     });
                 });
-                
+
                 observer.observe(document.body, { childList: true, subtree: true });
             });
         }
