@@ -1,0 +1,30 @@
+# IDEs and Editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Node dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Composer dependencies
+vendor/
+
+# Moodle specific / Grunt
+# Note: amd/build/ is intentionally NOT ignored so the plugin works out-of-the-box
+.grunt/
