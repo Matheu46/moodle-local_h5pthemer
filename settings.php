@@ -1,5 +1,18 @@
 <?php
 // This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
  * Settings for the H5P Themer plugin.
@@ -15,11 +28,11 @@ if ($hassiteconfig) {
     $settings = new admin_settingpage('local_h5pthemer', get_string('pluginname', 'local_h5pthemer'));
     $ADMIN->add('localplugins', $settings);
 
-    // Default configuration for the Theme Picker (JSON string)
-    $default_config = json_encode([
+    // Default configuration for the Theme Picker (JSON string).
+    $defaultconfig = json_encode([
         'theme' => 'daylight',
         'density' => 'large',
-        'colors' => []
+        'colors' => [],
     ]);
 
     // Provide a textarea that will be enhanced by the JS Theme Picker.
@@ -28,10 +41,10 @@ if ($hassiteconfig) {
         'local_h5pthemer/css_variables',
         get_string('themecolors', 'local_h5pthemer'),
         get_string('themecolors_desc', 'local_h5pthemer'),
-        $default_config,
+        $defaultconfig,
         PARAM_RAW
     ));
 
-    // Load AMD module to initialize the web component and handle the textarea
+    // Load AMD module to initialize the web component and handle the textarea.
     $PAGE->requires->js_call_amd('local_h5pthemer/settings', 'init');
 }
