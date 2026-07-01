@@ -249,6 +249,67 @@ define(['jquery', 'core/config'], function($, cfg) {
 
                         bindVisibilityToggle(pickerEl);
 
+                        var listContainer = $('<div class="mt-4"></div>');
+                        presetUI.after(listContainer);
+
+                        var renderList = function() {
+                            listContainer.empty();
+                            var currentPresets = presetsTextarea.val();
+                            if (!currentPresets || currentPresets.trim() === '') {
+                                return;
+                            }
+                            var presetsArr = [];
+                            try {
+                                presetsArr = JSON.parse(currentPresets);
+                            } catch (e) {
+                                return;
+                            }
+                            if (!presetsArr.length) {
+                                return;
+                            }
+
+                            var ul = $('<ul class="list-group"></ul>');
+                            var title = $('<h6>Temas Customizados Salvos</h6>');
+                            listContainer.append(title).append(ul);
+
+                            presetsArr.forEach(function(preset) {
+                                var li = $('<li class="list-group-item d-flex justify-content-between align-items-center p-2"></li>');
+                                li.text(preset.name || preset.id);
+                                var delBtn = $('<button type="button" class="btn btn-sm btn-outline-danger">Excluir</button>');
+                                delBtn.on('click', function(e) {
+                                    e.preventDefault();
+                                    if (!confirm('Deseja realmente apagar o tema "' + (preset.name || preset.id) + '"?')) {
+                                        return;
+                                    }
+                                    
+                                    var newPresets = presetsArr.filter(function(p) {
+                                        return p.id !== preset.id;
+                                    });
+                                    presetsTextarea.val(JSON.stringify(newPresets, null, 2));
+
+                                    var currentConfig = textarea.val();
+                                    try {
+                                        var parsed = JSON.parse(currentConfig);
+                                        if (parsed.theme === preset.id) {
+                                            parsed.theme = 'daylight';
+                                            textarea.val(JSON.stringify(parsed, null, 2));
+                                        }
+                                    } catch (err) {}
+
+                                    var newPickerEl = createPicker(textarea, presetsTextarea);
+                                    $(pickerEl).replaceWith(newPickerEl);
+                                    pickerEl = newPickerEl;
+                                    bindVisibilityToggle(pickerEl);
+                                    
+                                    renderList();
+                                });
+                                li.append(delBtn);
+                                ul.append(li);
+                            });
+                        };
+                        
+                        renderList();
+
                         presetButton.on('click', function(e) {
                             e.preventDefault();
                             var newPicker = handleSavePreset(textarea, presetsTextarea, presetInput, pickerEl);
@@ -256,6 +317,7 @@ define(['jquery', 'core/config'], function($, cfg) {
                                 pickerEl = newPicker;
                                 bindVisibilityToggle(pickerEl);
                                 presetUI.addClass('d-none').removeClass('d-flex');
+                                renderList();
                             }
                         });
                     }
