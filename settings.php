@@ -45,6 +45,14 @@ if ($hassiteconfig) {
         PARAM_RAW
     ));
 
+    $settings->add(new admin_setting_configtextarea(
+        'local_h5pthemer/presets_json',
+        get_string('presets_json', 'local_h5pthemer'),
+        get_string('presets_json_desc', 'local_h5pthemer'),
+        '',
+        PARAM_RAW
+    ));
+
     // Load AMD module to initialize the web component and handle the textarea.
     $PAGE->requires->js_call_amd('local_h5pthemer/settings', 'init');
 }
