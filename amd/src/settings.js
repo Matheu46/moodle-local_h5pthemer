@@ -5,7 +5,7 @@
  * @copyright  2026 Matheus Mathias
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define(['jquery', 'core/config', 'core/str'], function($, cfg, str) {
+define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, cfg, str, notification) {
     var componentTranslations = null;
     var uiTranslations = {};
 
@@ -246,7 +246,9 @@ define(['jquery', 'core/config', 'core/str'], function($, cfg, str) {
                     {key: 'save_new_preset', component: 'local_h5pthemer'},
                     {key: 'saved_custom_themes', component: 'local_h5pthemer'},
                     {key: 'delete', component: 'local_h5pthemer'},
-                    {key: 'confirm_delete_preset', component: 'local_h5pthemer'}
+                    {key: 'confirm_delete_preset', component: 'local_h5pthemer'},
+                    {key: 'confirm', component: 'core'},
+                    {key: 'cancel', component: 'core'}
                 ]).done(function(strs) {
                     componentTranslations = {
                         selector_theme_label: strs[0],
@@ -275,7 +277,9 @@ define(['jquery', 'core/config', 'core/str'], function($, cfg, str) {
                         save_new_preset: strs[21],
                         saved_custom_themes: strs[22],
                         delete: strs[23],
-                        confirm_delete_preset: strs[24]
+                        confirm_delete_preset: strs[24],
+                        confirm: strs[25],
+                        cancel: strs[26]
                     };
 
                     // Wait for the custom element to be fully registered before creating
@@ -364,30 +368,35 @@ define(['jquery', 'core/config', 'core/str'], function($, cfg, str) {
                                 delBtn.on('click', function(e) {
                                     e.preventDefault();
                                     var confirmMsg = uiTranslations.confirm_delete_preset.replace('{$a}', preset.name || preset.id);
-                                    if (!confirm(confirmMsg)) {
-                                        return;
-                                    }
+                                    
+                                    notification.confirm(
+                                        uiTranslations.confirm,
+                                        confirmMsg,
+                                        uiTranslations.delete,
+                                        uiTranslations.cancel,
+                                        function() {
+                                            var newPresets = presetsArr.filter(function(p) {
+                                                return p.id !== preset.id;
+                                            });
+                                            presetsTextarea.val(JSON.stringify(newPresets, null, 2));
 
-                                    var newPresets = presetsArr.filter(function(p) {
-                                        return p.id !== preset.id;
-                                    });
-                                    presetsTextarea.val(JSON.stringify(newPresets, null, 2));
+                                            var currentConfig = textarea.val();
+                                            try {
+                                                var parsed = JSON.parse(currentConfig);
+                                                if (parsed.theme === preset.id) {
+                                                    parsed.theme = 'daylight';
+                                                    textarea.val(JSON.stringify(parsed, null, 2));
+                                                }
+                                            } catch (err) {}
 
-                                    var currentConfig = textarea.val();
-                                    try {
-                                        var parsed = JSON.parse(currentConfig);
-                                        if (parsed.theme === preset.id) {
-                                            parsed.theme = 'daylight';
-                                            textarea.val(JSON.stringify(parsed, null, 2));
+                                            var newPickerEl = createPicker(textarea, presetsTextarea);
+                                            $(pickerEl).replaceWith(newPickerEl);
+                                            pickerEl = newPickerEl;
+                                            bindVisibilityToggle(pickerEl);
+
+                                            renderList();
                                         }
-                                    } catch (err) {}
-
-                                    var newPickerEl = createPicker(textarea, presetsTextarea);
-                                    $(pickerEl).replaceWith(newPickerEl);
-                                    pickerEl = newPickerEl;
-                                    bindVisibilityToggle(pickerEl);
-
-                                    renderList();
+                                    );
                                 });
                                 li.append(delBtn);
                                 ul.append(li);
