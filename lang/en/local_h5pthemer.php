@@ -32,3 +32,4 @@ $string['themecolors'] = 'Theme Colors';
 $string['themecolors_desc'] = 'Select the colors for your H5P content using the theme picker. The generated CSS variables will be applied to H5P elements.';
 $string['presets_json'] = 'Custom Presets';
 $string['presets_json_desc'] = 'Stores saved custom presets.';
+$string['coursesettings'] = 'H5P Theme';

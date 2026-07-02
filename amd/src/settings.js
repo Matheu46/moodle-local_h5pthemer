@@ -23,7 +23,7 @@ define(['jquery', 'core/config'], function($, cfg) {
                         '--h5p-theme-alternative-base': preset.color3 || '#000000',
                         '--h5p-theme-background': preset.color4 || '#ffffff'
                     };
-                    
+
                     componentPresets[preset.id] = {
                         label: preset.name || preset.id,
                         backgroundColor: (preset.colors && preset.colors['--h5p-theme-background']) || preset.color4 || '#ffffff',
@@ -45,7 +45,7 @@ define(['jquery', 'core/config'], function($, cfg) {
      */
     function createPicker(textarea, presetsTextarea) {
         var options = {};
-        
+
         var val = textarea.val();
         if (val && val.trim() !== '') {
             try {
@@ -191,7 +191,12 @@ define(['jquery', 'core/config'], function($, cfg) {
 
             $(document).ready(function() {
                 var textarea = $('#id_s_local_h5pthemer_css_variables');
+                if (!textarea.length) {
+                    textarea = $('#id_local_h5pthemer_course_config'); // for course level settings
+                }
+
                 var presetsTextarea = $('#id_s_local_h5pthemer_presets_json');
+                var presetsReadonly = $('#id_local_h5pthemer_presets_json_readonly');
 
                 if (!textarea.length) {
                     return;
@@ -199,15 +204,27 @@ define(['jquery', 'core/config'], function($, cfg) {
 
                 textarea.hide();
 
-                if (presetsTextarea.length) {
-                    presetsTextarea.closest('.form-item').hide();
+                var activePresetsTextarea = presetsTextarea.length ? presetsTextarea :
+                    (presetsReadonly.length ? presetsReadonly : null);
+
+                if (activePresetsTextarea) {
+                    activePresetsTextarea.closest('.form-item, .fitem').hide();
                 }
 
                 // Wait for the custom element to be fully registered before creating
                 customElements.whenDefined('h5p-theme-picker').then(function() {
-                    var pickerEl = createPicker(textarea, presetsTextarea);
-                    textarea.after(pickerEl);
+                    var pickerEl = createPicker(textarea, activePresetsTextarea);
 
+                    var fitem = textarea.closest('.form-item, .fitem');
+                    if (fitem.length) {
+                        fitem.after(pickerEl);
+                        fitem.hide();
+                    } else {
+                        textarea.after(pickerEl);
+                        textarea.hide();
+                    }
+
+                    // Only show preset creation/deletion UI if it's the admin setting (not readonly)
                     if (presetsTextarea.length) {
                         var presetUI = $('<div class="mt-3 d-flex align-items-center gap-2"></div>');
                         var inputHtml = '<input type="text" class="form-control" style="width: 250px;" ';
@@ -273,7 +290,8 @@ define(['jquery', 'core/config'], function($, cfg) {
                             listContainer.append(title).append(ul);
 
                             presetsArr.forEach(function(preset) {
-                                var li = $('<li class="list-group-item d-flex justify-content-between align-items-center p-2"></li>');
+                                var li = $('<li class="list-group-item d-flex ' +
+                                    'justify-content-between align-items-center p-2"></li>');
                                 li.text(preset.name || preset.id);
                                 var delBtn = $('<button type="button" class="btn btn-sm btn-outline-danger">Excluir</button>');
                                 delBtn.on('click', function(e) {
@@ -281,7 +299,7 @@ define(['jquery', 'core/config'], function($, cfg) {
                                     if (!confirm('Deseja realmente apagar o tema "' + (preset.name || preset.id) + '"?')) {
                                         return;
                                     }
-                                    
+
                                     var newPresets = presetsArr.filter(function(p) {
                                         return p.id !== preset.id;
                                     });
@@ -300,14 +318,14 @@ define(['jquery', 'core/config'], function($, cfg) {
                                     $(pickerEl).replaceWith(newPickerEl);
                                     pickerEl = newPickerEl;
                                     bindVisibilityToggle(pickerEl);
-                                    
+
                                     renderList();
                                 });
                                 li.append(delBtn);
                                 ul.append(li);
                             });
                         };
-                        
+
                         renderList();
 
                         presetButton.on('click', function(e) {
