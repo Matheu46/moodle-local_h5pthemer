@@ -5,7 +5,10 @@
  * @copyright  2026 Matheus Mathias
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define(['jquery', 'core/config'], function($, cfg) {
+define(['jquery', 'core/config', 'core/str'], function($, cfg, str) {
+    var componentTranslations = null;
+    var uiTranslations = {};
+
     /**
      * Maps the simple array format to the component's expected customPresets format.
      *
@@ -37,14 +40,20 @@ define(['jquery', 'core/config'], function($, cfg) {
     }
 
     /**
-     * Helper to setup and create a new picker element
+     * Helper to create and configure a new h5p-theme-picker DOM element.
      *
-     * @param {Object} textarea Main config textarea
-     * @param {Object} presetsTextarea Presets config textarea
-     * @return {HTMLElement} picker element
+     * @param {jQuery} textarea 
+     * @param {jQuery} presetsTextarea
+     * @param {Object} translations 
+     * @returns {HTMLElement}
      */
-    function createPicker(textarea, presetsTextarea) {
+    function createPicker(textarea, presetsTextarea, translations) {
         var options = {};
+        
+        translations = translations || componentTranslations;
+        if (translations) {
+            options.translations = translations;
+        }
 
         var val = textarea.val();
         if (val && val.trim() !== '') {
@@ -211,8 +220,66 @@ define(['jquery', 'core/config'], function($, cfg) {
                     activePresetsTextarea.closest('.form-item, .fitem').hide();
                 }
 
-                // Wait for the custom element to be fully registered before creating
-                customElements.whenDefined('h5p-theme-picker').then(function() {
+                // Load translations from Moodle before initializing the picker
+                str.get_strings([
+                    {key: 'selector_theme_label', component: 'local_h5pthemer'},
+                    {key: 'selector_theme_value_daylight', component: 'local_h5pthemer'},
+                    {key: 'selector_theme_value_lavender', component: 'local_h5pthemer'},
+                    {key: 'selector_theme_value_mint', component: 'local_h5pthemer'},
+                    {key: 'selector_theme_value_sunset', component: 'local_h5pthemer'},
+                    {key: 'selector_theme_value_custom', component: 'local_h5pthemer'},
+                    {key: 'selector_density_label', component: 'local_h5pthemer'},
+                    {key: 'selector_density_value_large', component: 'local_h5pthemer'},
+                    {key: 'selector_density_value_medium', component: 'local_h5pthemer'},
+                    {key: 'selector_density_value_small', component: 'local_h5pthemer'},
+                    {key: 'color_selector_title', component: 'local_h5pthemer'},
+                    {key: 'color_selector_buttons_label', component: 'local_h5pthemer'},
+                    {key: 'color_selector_buttons_button_aria', component: 'local_h5pthemer'},
+                    {key: 'color_selector_navigation_label', component: 'local_h5pthemer'},
+                    {key: 'color_selector_navigation_button_aria', component: 'local_h5pthemer'},
+                    {key: 'color_selector_alternative_label', component: 'local_h5pthemer'},
+                    {key: 'color_selector_alternative_button_aria', component: 'local_h5pthemer'},
+                    {key: 'color_selector_background_label', component: 'local_h5pthemer'},
+                    {key: 'color_selector_background_button_aria', component: 'local_h5pthemer'},
+                    {key: 'preview_preview_label_prefix', component: 'local_h5pthemer'},
+                    {key: 'preset_name', component: 'local_h5pthemer'},
+                    {key: 'save_new_preset', component: 'local_h5pthemer'},
+                    {key: 'saved_custom_themes', component: 'local_h5pthemer'},
+                    {key: 'delete', component: 'local_h5pthemer'},
+                    {key: 'confirm_delete_preset', component: 'local_h5pthemer'}
+                ]).done(function(strs) {
+                    componentTranslations = {
+                        selector_theme_label: strs[0],
+                        selector_theme_value_daylight: strs[1],
+                        selector_theme_value_lavender: strs[2],
+                        selector_theme_value_mint: strs[3],
+                        selector_theme_value_sunset: strs[4],
+                        selector_theme_value_custom: strs[5],
+                        selector_density_label: strs[6],
+                        selector_density_value_large: strs[7],
+                        selector_density_value_medium: strs[8],
+                        selector_density_value_small: strs[9],
+                        color_selector_title: strs[10],
+                        color_selector_buttons_label: strs[11],
+                        color_selector_buttons_button_aria: strs[12],
+                        color_selector_navigation_label: strs[13],
+                        color_selector_navigation_button_aria: strs[14],
+                        color_selector_alternative_label: strs[15],
+                        color_selector_alternative_button_aria: strs[16],
+                        color_selector_background_label: strs[17],
+                        color_selector_background_button_aria: strs[18],
+                        preview_preview_label_prefix: strs[19]
+                    };
+                    uiTranslations = {
+                        preset_name: strs[20],
+                        save_new_preset: strs[21],
+                        saved_custom_themes: strs[22],
+                        delete: strs[23],
+                        confirm_delete_preset: strs[24]
+                    };
+
+                    // Wait for the custom element to be fully registered before creating
+                    customElements.whenDefined('h5p-theme-picker').then(function() {
                     var pickerEl = createPicker(textarea, activePresetsTextarea);
 
                     var fitem = textarea.closest('.form-item, .fitem');
@@ -228,10 +295,10 @@ define(['jquery', 'core/config'], function($, cfg) {
                     if (presetsTextarea.length) {
                         var presetUI = $('<div class="mt-3 d-flex align-items-center gap-2"></div>');
                         var inputHtml = '<input type="text" class="form-control" style="width: 250px;" ';
-                        inputHtml += 'placeholder="Nome do Preset">';
+                        inputHtml += 'placeholder="' + uiTranslations.preset_name + '">';
                         var presetInput = $(inputHtml);
                         var btnHtml = '<button type="button" class="btn btn-secondary">';
-                        btnHtml += 'Salvar como Novo Preset</button>';
+                        btnHtml += uiTranslations.save_new_preset + '</button>';
                         var presetButton = $(btnHtml);
 
                         presetUI.append(presetInput).append(presetButton);
@@ -286,17 +353,18 @@ define(['jquery', 'core/config'], function($, cfg) {
                             }
 
                             var ul = $('<ul class="list-group"></ul>');
-                            var title = $('<h6>Temas Customizados Salvos</h6>');
+                            var title = $('<h6>' + uiTranslations.saved_custom_themes + '</h6>');
                             listContainer.append(title).append(ul);
 
                             presetsArr.forEach(function(preset) {
                                 var li = $('<li class="list-group-item d-flex ' +
                                     'justify-content-between align-items-center p-2"></li>');
                                 li.text(preset.name || preset.id);
-                                var delBtn = $('<button type="button" class="btn btn-sm btn-outline-danger">Excluir</button>');
+                                var delBtn = $('<button type="button" class="btn btn-sm btn-outline-danger">' + uiTranslations.delete + '</button>');
                                 delBtn.on('click', function(e) {
                                     e.preventDefault();
-                                    if (!confirm('Deseja realmente apagar o tema "' + (preset.name || preset.id) + '"?')) {
+                                    var confirmMsg = uiTranslations.confirm_delete_preset.replace('{$a}', preset.name || preset.id);
+                                    if (!confirm(confirmMsg)) {
                                         return;
                                     }
 
@@ -339,6 +407,20 @@ define(['jquery', 'core/config'], function($, cfg) {
                             }
                         });
                     }
+                });
+                }).fail(function(ex) {
+                    // Fallback to english or proceed without translation if strings fail to load
+                    customElements.whenDefined('h5p-theme-picker').then(function() {
+                        var pickerEl = createPicker(textarea, activePresetsTextarea);
+                        var fitem = textarea.closest('.form-item, .fitem');
+                        if (fitem.length) {
+                            fitem.after(pickerEl);
+                            fitem.hide();
+                        } else {
+                            textarea.after(pickerEl);
+                            textarea.hide();
+                        }
+                    });
                 });
             });
         }
