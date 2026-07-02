@@ -37,13 +37,13 @@ function local_h5pthemer_extend_navigation(navigation_node $navigation) {
         $config = json_decode($jsonconfig, true);
     }
 
-    // Override with course level config if it exists
+    // Override with course level config if it exists.
     if (!empty($COURSE->id) && $COURSE->id != SITEID) {
-        $course_config_json = get_config('local_h5pthemer', "course_{$COURSE->id}_config");
-        if ($course_config_json) {
-            $course_config = json_decode($course_config_json, true);
-            if (!empty($course_config['theme']) && $course_config['theme'] !== 'default') {
-                $config = $course_config;
+        $courseconfigjson = get_config('local_h5pthemer', "course_{$COURSE->id}_config");
+        if ($courseconfigjson) {
+            $courseconfig = json_decode($courseconfigjson, true);
+            if (!empty($courseconfig['theme']) && $courseconfig['theme'] !== 'default') {
+                $config = $courseconfig;
             }
         }
     }
