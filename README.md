@@ -2,14 +2,14 @@
 
 **H5P Themer** is a Moodle local plugin that allows administrators to centrally customize the visual themes (colors) and density of H5P content, supporting both the traditional **`mod_hvp`** plugin and the Moodle Core H5P system (**`core_h5p`** / **`mod_h5pactivity`**).
 
-This project is adapted from the WordPress `snordians-h5p-themer` plugin, tailoring its functionality for seamless integration into the Moodle ecosystem.
+This project is adapted from the WordPress [snordians-h5p-themer](https://github.com/otacke/snordians-h5p-themer) plugin, tailoring its functionality for seamless integration into the Moodle ecosystem.
 
 ---
 
 ## 🚀 How It Works
 
 1. **Simple Configuration Panel:**
-   The plugin integrates the official **`h5p-theme-picker`** web component directly into Moodle's administration interface (`Site Administration > Plugins > Local plugins > H5P Themer`).
+   The plugin integrates the official [h5p-theme-picker](https://github.com/otacke/h5p-theme-picker) web component directly into Moodle's administration interface (`Site Administration > Plugins > Local plugins > H5P Themer`).
 
 2. **Multi-Preset Management:**
    Administrators can define custom color configurations and save them as named presets. These custom presets can be loaded, edited, and deleted directly within the administration settings UI.
