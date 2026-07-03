@@ -25,39 +25,36 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['color_selector_alternative_button_aria'] = 'Pick alternative hue as contrast to main color';
+$string['color_selector_alternative_label'] = 'Alternative';
+$string['color_selector_background_button_aria'] = 'Pick color for the background';
+$string['color_selector_background_label'] = 'Background';
+$string['color_selector_buttons_button_aria'] = 'Pick main color, e.g. for buttons';
+$string['color_selector_buttons_label'] = 'Buttons';
+$string['color_selector_navigation_button_aria'] = 'Pick secondary color for navigation buttons';
+$string['color_selector_navigation_label'] = 'Navigation';
+$string['color_selector_title'] = 'Define theme colors';
+$string['confirm_delete_preset'] = 'Are you sure you want to delete the theme "{$a}"?';
 $string['coursesettings'] = 'H5P Theme';
-
-$string['selector_theme_label'] = 'Theme';
-$string['selector_theme_value_daylight'] = 'Daylight (default)';
-$string['selector_theme_value_lavender'] = 'Lavender';
-$string['selector_theme_value_mint'] = 'Mint';
-$string['selector_theme_value_sunset'] = 'Sunset';
-$string['selector_theme_value_custom'] = 'Custom Theme';
+$string['delete'] = 'Delete';
+$string['h5pthemer:manage'] = 'Manage H5P Themer settings';
+$string['pluginname'] = 'H5P Themer';
+$string['preset_name'] = 'Preset name';
+$string['presets_json'] = 'Custom Presets';
+$string['presets_json_desc'] = 'Stores saved custom presets.';
+$string['preview_preview_label_prefix'] = 'Preview:';
+$string['save_new_preset'] = 'Save as New Preset';
+$string['saved_custom_themes'] = 'Saved Custom Themes';
 $string['selector_density_label'] = 'Density';
 $string['selector_density_value_large'] = 'Wide (default)';
 $string['selector_density_value_medium'] = 'Medium';
 $string['selector_density_value_small'] = 'Compact';
-$string['color_selector_title'] = 'Define theme colors';
-$string['color_selector_buttons_label'] = 'Buttons';
-$string['color_selector_buttons_button_aria'] = 'Pick main color, e.g. for buttons';
-$string['color_selector_navigation_label'] = 'Navigation';
-$string['color_selector_navigation_button_aria'] = 'Pick secondary color for navigation buttons';
-$string['color_selector_alternative_label'] = 'Alternative';
-$string['color_selector_alternative_button_aria'] = 'Pick alternative hue as contrast to main color';
-$string['color_selector_background_label'] = 'Background';
-$string['color_selector_background_button_aria'] = 'Pick color for the background';
-$string['preview_preview_label_prefix'] = 'Preview:';
-$string['h5pthemer:manage'] = 'Manage H5P Themer settings';
-$string['pluginname'] = 'H5P Themer';
-$string['presets_json'] = 'Custom Presets';
-$string['presets_json_desc'] = 'Stores saved custom presets.';
+$string['selector_theme_label'] = 'Theme';
+$string['selector_theme_value_custom'] = 'Custom Theme';
+$string['selector_theme_value_daylight'] = 'Daylight (default)';
+$string['selector_theme_value_lavender'] = 'Lavender';
+$string['selector_theme_value_mint'] = 'Mint';
+$string['selector_theme_value_sunset'] = 'Sunset';
 $string['settings'] = 'H5P Themer Settings';
 $string['themecolors'] = 'Theme Colors';
 $string['themecolors_desc'] = 'Select the colors for your H5P content using the theme picker. The generated CSS variables will be applied to H5P elements.';
-
-// UI strings for preset management
-$string['preset_name'] = 'Preset name';
-$string['save_new_preset'] = 'Save as New Preset';
-$string['saved_custom_themes'] = 'Saved Custom Themes';
-$string['delete'] = 'Delete';
-$string['confirm_delete_preset'] = 'Are you sure you want to delete the theme "{$a}"?';
