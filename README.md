@@ -11,13 +11,19 @@ This project is adapted from the WordPress `snordians-h5p-themer` plugin, tailor
 1. **Simple Configuration Panel:**
    The plugin integrates the official **`h5p-theme-picker`** web component directly into Moodle's administration interface (`Site Administration > Plugins > Local plugins > H5P Themer`).
 
-2. **Dynamic CSS Variables Injection:**
-   On the Moodle frontend, the AMD script intercepts the loading of any H5P content and injects custom CSS variables (`--h5p-theme-*`) into the `<head>` tag of the H5P iframes.
+2. **Multi-Preset Management:**
+   Administrators can define custom color configurations and save them as named presets. These custom presets can be loaded, edited, and deleted directly within the administration settings UI.
 
-3. **Density Management:**
+3. **Per-Course Theme Selection:**
+   Teachers (or users with editing capabilities) can customize the theme of individual courses. By clicking the **"H5P Theme"** option in the course navigation settings menu, they can select from the global default theme, built-in themes (Daylight, Lavender, etc.), or any administrator-defined custom presets.
+
+4. **Dynamic CSS Variables Injection:**
+   On the Moodle frontend, the AMD script intercepts the loading of any H5P content and injects custom CSS variables (`--h5p-theme-*`) into the `<head>` tag of the H5P iframes. It automatically resolves whether to use the global site configuration or the specific course-level theme override.
+
+5. **Density Management:**
    The plugin applies the chosen density class (`h5p-large`, `h5p-medium`, `h5p-small`) to the H5P root container (`.h5p-content`) and triggers a `resize` event so the H5P content correctly adapts to the new dimensions.
 
-4. **Support for Moodle Core Nested Iframes:**
+6. **Support for Moodle Core Nested Iframes:**
    Moodle Core renders H5P content inside a nested iframe structure (`h5p-player` -> `h5p-iframe`). The frontend script recursively crawls this structure to guarantee that styles and density properties are injected into the innermost document.
 
 ---
@@ -26,7 +32,10 @@ This project is adapted from the WordPress `snordians-h5p-themer` plugin, tailor
 
 - **Visual Component:** Uses the custom `h5p-theme-picker` library (dynamically loaded).
 - **Frontend Processing:** Powered by a Moodle AMD Javascript module (`amd/src/themer.js`) featuring a smart polling loop and a `MutationObserver` to capture dynamically loaded iframes via AJAX or modals.
-- **Storage:** Configuration is stored as a native JSON string in Moodle's config table (`get_config('local_h5pthemer', 'css_variables')`).
+- **Storage:** 
+  - **Global Configuration:** Stored as a native JSON string in Moodle's config table (`get_config('local_h5pthemer', 'css_variables')`).
+  - **Custom Presets:** Saved custom presets are stored in Moodle's config table (`get_config('local_h5pthemer', 'presets_json')`).
+  - **Course Configurations:** Course-level overrides are stored in Moodle's config table (`get_config('local_h5pthemer', 'course_{courseid}_config')`).
 
 ---
 
