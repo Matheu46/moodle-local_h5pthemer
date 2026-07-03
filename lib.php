@@ -29,7 +29,7 @@
  * @param navigation_node $navigation
  */
 function local_h5pthemer_extend_navigation(navigation_node $navigation) {
-    global $PAGE;
+    global $PAGE, $COURSE;
 
     $jsonconfig = get_config('local_h5pthemer', 'css_variables');
     $config = [];
@@ -37,6 +37,38 @@ function local_h5pthemer_extend_navigation(navigation_node $navigation) {
         $config = json_decode($jsonconfig, true);
     }
 
+    // Override with course level config if it exists.
+    if (!empty($COURSE->id) && $COURSE->id != SITEID) {
+        $courseconfigjson = get_config('local_h5pthemer', "course_{$COURSE->id}_config");
+        if ($courseconfigjson) {
+            $courseconfig = json_decode($courseconfigjson, true);
+            if (!empty($courseconfig['theme']) && $courseconfig['theme'] !== 'default') {
+                $config = $courseconfig;
+            }
+        }
+    }
+
     // We load the themer AMD module which will look for H5P iframes and inject variables.
     $PAGE->requires->js_call_amd('local_h5pthemer/themer', 'init', [$config]);
+}
+
+/**
+ * Extends course navigation to add a settings link for teachers.
+ *
+ * @param navigation_node $navigation
+ * @param stdClass $course
+ * @param context $context
+ */
+function local_h5pthemer_extend_navigation_course(navigation_node $navigation, $course, $context) {
+    if (has_capability('moodle/course:update', $context)) {
+        $url = new moodle_url('/local/h5pthemer/course_settings.php', ['id' => $course->id]);
+        $node = navigation_node::create(
+            get_string('coursesettings', 'local_h5pthemer'),
+            $url,
+            navigation_node::TYPE_SETTING,
+            null,
+            'local_h5pthemer_course_settings'
+        );
+        $navigation->add_node($node);
+    }
 }
