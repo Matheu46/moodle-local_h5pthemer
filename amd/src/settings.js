@@ -42,14 +42,14 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
     /**
      * Helper to create and configure a new h5p-theme-picker DOM element.
      *
-     * @param {jQuery} textarea 
+     * @param {jQuery} textarea
      * @param {jQuery} presetsTextarea
-     * @param {Object} translations 
+     * @param {Object} translations
      * @returns {HTMLElement}
      */
     function createPicker(textarea, presetsTextarea, translations) {
         var options = {};
-        
+
         translations = translations || componentTranslations;
         if (translations) {
             options.translations = translations;
@@ -191,6 +191,209 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
         return newPickerEl;
     }
 
+    /**
+     * Sets up the preset creation and deletion UI.
+     *
+     * @param {jQuery} textarea
+     * @param {jQuery} presetsTextarea
+     * @param {HTMLElement} pickerEl
+     */
+    function setupPresetManagement(textarea, presetsTextarea, pickerEl) {
+        var presetUI = $('<div class="mt-3 d-flex align-items-center gap-2"></div>');
+        var inputHtml = '<input type="text" class="form-control" style="width: 250px;" ';
+        inputHtml += 'placeholder="' + uiTranslations.preset_name + '">';
+        var presetInput = $(inputHtml);
+        var btnHtml = '<button type="button" class="btn btn-secondary">';
+        btnHtml += uiTranslations.save_new_preset + '</button>';
+        var presetButton = $(btnHtml);
+
+        presetUI.append(presetInput).append(presetButton);
+        $(pickerEl).after(presetUI);
+
+        var currentConfigStr = textarea.val();
+        var isCustom = false;
+        try {
+            var parsed = JSON.parse(currentConfigStr);
+            if (parsed.theme === 'custom') {
+                isCustom = true;
+            }
+        } catch (e) {
+            // Ignore
+        }
+
+        if (!isCustom) {
+            presetUI.addClass('d-none').removeClass('d-flex');
+        }
+
+        var bindVisibilityToggle = function(pickerInstance) {
+            pickerInstance.addEventListener('theme-change', function(e) {
+                if (e.detail && e.detail.theme) {
+                    if (e.detail.theme === 'custom') {
+                        presetUI.removeClass('d-none').addClass('d-flex');
+                    } else {
+                        presetUI.addClass('d-none').removeClass('d-flex');
+                    }
+                }
+            });
+        };
+
+        bindVisibilityToggle(pickerEl);
+
+        var listContainer = $('<div class="mt-4"></div>');
+        presetUI.after(listContainer);
+
+        var renderList = function() {
+            listContainer.empty();
+            var currentPresets = presetsTextarea.val();
+            if (!currentPresets || currentPresets.trim() === '') {
+                return;
+            }
+            var presetsArr = [];
+            try {
+                presetsArr = JSON.parse(currentPresets);
+            } catch (e) {
+                return;
+            }
+            if (!presetsArr.length) {
+                return;
+            }
+
+            var ul = $('<ul class="list-group"></ul>');
+            var title = $('<h6>' + uiTranslations.saved_custom_themes + '</h6>');
+            listContainer.append(title).append(ul);
+
+            presetsArr.forEach(function(preset) {
+                var li = $('<li class="list-group-item d-flex ' +
+                    'justify-content-between align-items-center p-2"></li>');
+                li.text(preset.name || preset.id);
+                var delBtn = $('<button type="button" class="btn btn-sm btn-outline-danger">' +
+                    uiTranslations.delete + '</button>');
+                delBtn.on('click', function(e) {
+                    e.preventDefault();
+                    var confirmMsg = uiTranslations.confirm_delete_preset.replace('{$a}', preset.name || preset.id);
+
+                    notification.confirm(
+                        uiTranslations.confirm,
+                        confirmMsg,
+                        uiTranslations.delete,
+                        uiTranslations.cancel,
+                        function() {
+                            var newPresets = [];
+                            for (var i = 0; i < presetsArr.length; i++) {
+                                if (presetsArr[i].id !== preset.id) {
+                                    newPresets.push(presetsArr[i]);
+                                }
+                            }
+                            presetsTextarea.val(JSON.stringify(newPresets, null, 2));
+
+                            var currentConfig = textarea.val();
+                            try {
+                                var parsed = JSON.parse(currentConfig);
+                                if (parsed.theme === preset.id) {
+                                    parsed.theme = 'daylight';
+                                    textarea.val(JSON.stringify(parsed, null, 2));
+                                }
+                            } catch (err) {
+                                // Ignore
+                            }
+
+                            var newPickerEl = createPicker(textarea, presetsTextarea);
+                            $(pickerEl).replaceWith(newPickerEl);
+                            pickerEl = newPickerEl;
+                            bindVisibilityToggle(pickerEl);
+
+                            renderList();
+                        }
+                    );
+                });
+                li.append(delBtn);
+                ul.append(li);
+            });
+        };
+
+        renderList();
+
+        presetButton.on('click', function(e) {
+            e.preventDefault();
+            var newPicker = handleSavePreset(textarea, presetsTextarea, presetInput, pickerEl);
+            if (newPicker) {
+                pickerEl = newPicker;
+                bindVisibilityToggle(pickerEl);
+                presetUI.addClass('d-none').removeClass('d-flex');
+                renderList();
+            }
+        });
+    }
+
+    /**
+     * Initialize the theme picker UI after translations are loaded.
+     *
+     * @param {jQuery} textarea
+     * @param {jQuery} presetsTextarea
+     * @param {jQuery} presetsReadonly
+     * @param {Array} strs Loaded translation strings
+     */
+    function initializeUI(textarea, presetsTextarea, presetsReadonly, strs) {
+        componentTranslations = {
+            'selector_theme_label': strs[0],
+            'selector_theme_value_daylight': strs[1],
+            'selector_theme_value_lavender': strs[2],
+            'selector_theme_value_mint': strs[3],
+            'selector_theme_value_sunset': strs[4],
+            'selector_theme_value_custom': strs[5],
+            'selector_density_label': strs[6],
+            'selector_density_value_large': strs[7],
+            'selector_density_value_medium': strs[8],
+            'selector_density_value_small': strs[9],
+            'color_selector_title': strs[10],
+            'color_selector_buttons_label': strs[11],
+            'color_selector_buttons_button_aria': strs[12],
+            'color_selector_navigation_label': strs[13],
+            'color_selector_navigation_button_aria': strs[14],
+            'color_selector_alternative_label': strs[15],
+            'color_selector_alternative_button_aria': strs[16],
+            'color_selector_background_label': strs[17],
+            'color_selector_background_button_aria': strs[18],
+            'preview_preview_label_prefix': strs[19]
+        };
+        uiTranslations = {
+            'preset_name': strs[20],
+            'save_new_preset': strs[21],
+            'saved_custom_themes': strs[22],
+            'delete': strs[23],
+            'confirm_delete_preset': strs[24],
+            'confirm': strs[25],
+            'cancel': strs[26]
+        };
+
+        var activePresetsTextarea = null;
+        if (presetsTextarea.length) {
+            activePresetsTextarea = presetsTextarea;
+        } else if (presetsReadonly.length) {
+            activePresetsTextarea = presetsReadonly;
+        }
+
+        // Wait for the custom element to be fully registered before creating
+        customElements.whenDefined('h5p-theme-picker').then(function() {
+            var pickerEl = createPicker(textarea, activePresetsTextarea);
+
+            var fitem = textarea.closest('.form-item, .fitem');
+            if (fitem.length) {
+                fitem.after(pickerEl);
+                fitem.hide();
+            } else {
+                textarea.after(pickerEl);
+                textarea.hide();
+            }
+
+            // Only show preset creation/deletion UI if it's the admin setting (not readonly)
+            if (presetsTextarea.length) {
+                setupPresetManagement(textarea, presetsTextarea, pickerEl);
+            }
+            return null;
+        }).catch(notification.exception);
+    }
+
     return {
         init: function() {
             var script = document.createElement('script');
@@ -201,7 +404,7 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
             $(document).ready(function() {
                 var textarea = $('#id_s_local_h5pthemer_css_variables');
                 if (!textarea.length) {
-                    textarea = $('#id_local_h5pthemer_course_config'); // for course level settings
+                    textarea = $('#id_local_h5pthemer_course_config'); // For course level settings
                 }
 
                 var presetsTextarea = $('#id_s_local_h5pthemer_presets_json');
@@ -213,8 +416,12 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
 
                 textarea.hide();
 
-                var activePresetsTextarea = presetsTextarea.length ? presetsTextarea :
-                    (presetsReadonly.length ? presetsReadonly : null);
+                var activePresetsTextarea = null;
+                if (presetsTextarea.length) {
+                    activePresetsTextarea = presetsTextarea;
+                } else if (presetsReadonly.length) {
+                    activePresetsTextarea = presetsReadonly;
+                }
 
                 if (activePresetsTextarea) {
                     activePresetsTextarea.closest('.form-item, .fitem').hide();
@@ -250,174 +457,8 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
                     {key: 'confirm', component: 'core'},
                     {key: 'cancel', component: 'core'}
                 ]).done(function(strs) {
-                    componentTranslations = {
-                        selector_theme_label: strs[0],
-                        selector_theme_value_daylight: strs[1],
-                        selector_theme_value_lavender: strs[2],
-                        selector_theme_value_mint: strs[3],
-                        selector_theme_value_sunset: strs[4],
-                        selector_theme_value_custom: strs[5],
-                        selector_density_label: strs[6],
-                        selector_density_value_large: strs[7],
-                        selector_density_value_medium: strs[8],
-                        selector_density_value_small: strs[9],
-                        color_selector_title: strs[10],
-                        color_selector_buttons_label: strs[11],
-                        color_selector_buttons_button_aria: strs[12],
-                        color_selector_navigation_label: strs[13],
-                        color_selector_navigation_button_aria: strs[14],
-                        color_selector_alternative_label: strs[15],
-                        color_selector_alternative_button_aria: strs[16],
-                        color_selector_background_label: strs[17],
-                        color_selector_background_button_aria: strs[18],
-                        preview_preview_label_prefix: strs[19]
-                    };
-                    uiTranslations = {
-                        preset_name: strs[20],
-                        save_new_preset: strs[21],
-                        saved_custom_themes: strs[22],
-                        delete: strs[23],
-                        confirm_delete_preset: strs[24],
-                        confirm: strs[25],
-                        cancel: strs[26]
-                    };
-
-                    // Wait for the custom element to be fully registered before creating
-                    customElements.whenDefined('h5p-theme-picker').then(function() {
-                    var pickerEl = createPicker(textarea, activePresetsTextarea);
-
-                    var fitem = textarea.closest('.form-item, .fitem');
-                    if (fitem.length) {
-                        fitem.after(pickerEl);
-                        fitem.hide();
-                    } else {
-                        textarea.after(pickerEl);
-                        textarea.hide();
-                    }
-
-                    // Only show preset creation/deletion UI if it's the admin setting (not readonly)
-                    if (presetsTextarea.length) {
-                        var presetUI = $('<div class="mt-3 d-flex align-items-center gap-2"></div>');
-                        var inputHtml = '<input type="text" class="form-control" style="width: 250px;" ';
-                        inputHtml += 'placeholder="' + uiTranslations.preset_name + '">';
-                        var presetInput = $(inputHtml);
-                        var btnHtml = '<button type="button" class="btn btn-secondary">';
-                        btnHtml += uiTranslations.save_new_preset + '</button>';
-                        var presetButton = $(btnHtml);
-
-                        presetUI.append(presetInput).append(presetButton);
-                        $(pickerEl).after(presetUI);
-
-                        var currentConfigStr = textarea.val();
-                        var isCustom = false;
-                        try {
-                            var parsed = JSON.parse(currentConfigStr);
-                            if (parsed.theme === 'custom') {
-                                isCustom = true;
-                            }
-                        } catch (e) {
-                            // ignore
-                        }
-
-                        if (!isCustom) {
-                            presetUI.addClass('d-none').removeClass('d-flex');
-                        }
-
-                        var bindVisibilityToggle = function(pickerInstance) {
-                            pickerInstance.addEventListener('theme-change', function(e) {
-                                if (e.detail && e.detail.theme) {
-                                    if (e.detail.theme === 'custom') {
-                                        presetUI.removeClass('d-none').addClass('d-flex');
-                                    } else {
-                                        presetUI.addClass('d-none').removeClass('d-flex');
-                                    }
-                                }
-                            });
-                        };
-
-                        bindVisibilityToggle(pickerEl);
-
-                        var listContainer = $('<div class="mt-4"></div>');
-                        presetUI.after(listContainer);
-
-                        var renderList = function() {
-                            listContainer.empty();
-                            var currentPresets = presetsTextarea.val();
-                            if (!currentPresets || currentPresets.trim() === '') {
-                                return;
-                            }
-                            var presetsArr = [];
-                            try {
-                                presetsArr = JSON.parse(currentPresets);
-                            } catch (e) {
-                                return;
-                            }
-                            if (!presetsArr.length) {
-                                return;
-                            }
-
-                            var ul = $('<ul class="list-group"></ul>');
-                            var title = $('<h6>' + uiTranslations.saved_custom_themes + '</h6>');
-                            listContainer.append(title).append(ul);
-
-                            presetsArr.forEach(function(preset) {
-                                var li = $('<li class="list-group-item d-flex ' +
-                                    'justify-content-between align-items-center p-2"></li>');
-                                li.text(preset.name || preset.id);
-                                var delBtn = $('<button type="button" class="btn btn-sm btn-outline-danger">' + uiTranslations.delete + '</button>');
-                                delBtn.on('click', function(e) {
-                                    e.preventDefault();
-                                    var confirmMsg = uiTranslations.confirm_delete_preset.replace('{$a}', preset.name || preset.id);
-                                    
-                                    notification.confirm(
-                                        uiTranslations.confirm,
-                                        confirmMsg,
-                                        uiTranslations.delete,
-                                        uiTranslations.cancel,
-                                        function() {
-                                            var newPresets = presetsArr.filter(function(p) {
-                                                return p.id !== preset.id;
-                                            });
-                                            presetsTextarea.val(JSON.stringify(newPresets, null, 2));
-
-                                            var currentConfig = textarea.val();
-                                            try {
-                                                var parsed = JSON.parse(currentConfig);
-                                                if (parsed.theme === preset.id) {
-                                                    parsed.theme = 'daylight';
-                                                    textarea.val(JSON.stringify(parsed, null, 2));
-                                                }
-                                            } catch (err) {}
-
-                                            var newPickerEl = createPicker(textarea, presetsTextarea);
-                                            $(pickerEl).replaceWith(newPickerEl);
-                                            pickerEl = newPickerEl;
-                                            bindVisibilityToggle(pickerEl);
-
-                                            renderList();
-                                        }
-                                    );
-                                });
-                                li.append(delBtn);
-                                ul.append(li);
-                            });
-                        };
-
-                        renderList();
-
-                        presetButton.on('click', function(e) {
-                            e.preventDefault();
-                            var newPicker = handleSavePreset(textarea, presetsTextarea, presetInput, pickerEl);
-                            if (newPicker) {
-                                pickerEl = newPicker;
-                                bindVisibilityToggle(pickerEl);
-                                presetUI.addClass('d-none').removeClass('d-flex');
-                                renderList();
-                            }
-                        });
-                    }
-                });
-                }).fail(function(ex) {
+                    initializeUI(textarea, presetsTextarea, presetsReadonly, strs);
+                }).fail(function() {
                     // Fallback to english or proceed without translation if strings fail to load
                     customElements.whenDefined('h5p-theme-picker').then(function() {
                         var pickerEl = createPicker(textarea, activePresetsTextarea);
@@ -429,7 +470,8 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
                             textarea.after(pickerEl);
                             textarea.hide();
                         }
-                    });
+                        return null;
+                    }).catch(notification.exception);
                 });
             });
         }
