@@ -36,6 +36,7 @@ $string['color_selector_navigation_label'] = 'Navigation';
 $string['color_selector_title'] = 'Define theme colors';
 $string['confirm_delete_preset'] = 'Are you sure you want to delete the theme "{$a}"?';
 $string['coursesettings'] = 'H5P Theme';
+$string['delete'] = 'Delete';
 $string['pluginname'] = 'H5P Themer';
 $string['preset_name'] = 'Preset name';
 $string['presets_json'] = 'Custom Presets';
