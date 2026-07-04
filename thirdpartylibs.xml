@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<libraries>
+  <library>
+    <location>js/h5p-theme-picker.js</location>
+    <name>H5P Theme Picker</name>
+    <license>MIT</license>
+    <version>0.0.10</version>
+    <licenseversion></licenseversion>
+    <repository>https://github.com/otacke/h5p-theme-picker</repository>
+    <copyright>Oliver Tacke</copyright>
+  </library>
+</libraries>
