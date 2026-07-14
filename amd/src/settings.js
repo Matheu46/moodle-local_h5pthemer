@@ -100,10 +100,58 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
 
         var PickerClass = customElements.get('h5p-theme-picker');
         var picker;
-        if (PickerClass) {
-            picker = new PickerClass(options);
-        } else {
-            picker = document.createElement('h5p-theme-picker');
+
+        // Temporarily monkey-patch getAttribute to provide the attributes to the Web Component's constructor
+        // because the component currently reads them synchronously before we have a chance to set them.
+        var originalGetAttribute = HTMLElement.prototype.getAttribute;
+        HTMLElement.prototype.getAttribute = function(name) {
+            if (name === 'custom-color-buttons' && options.customColorButtons) {
+                return options.customColorButtons;
+            }
+            if (name === 'custom-color-navigation' && options.customColorNavigation) {
+                return options.customColorNavigation;
+            }
+            if (name === 'custom-color-alternative' && options.customColorAlternative) {
+                return options.customColorAlternative;
+            }
+            if (name === 'custom-color-background' && options.customColorBackground) {
+                return options.customColorBackground;
+            }
+            if (name === 'theme-name' && options.theme) {
+                return options.theme;
+            }
+            if (name === 'density' && options.density) {
+                return options.density;
+            }
+            return originalGetAttribute.call(this, name);
+        };
+        try {
+            if (PickerClass) {
+                picker = new PickerClass(options);
+            } else {
+                picker = document.createElement('h5p-theme-picker');
+            }
+        } finally {
+            HTMLElement.prototype.getAttribute = originalGetAttribute;
+        }
+
+        if (options.theme) {
+            picker.setAttribute('theme-name', options.theme);
+        }
+        if (options.density) {
+            picker.setAttribute('density', options.density);
+        }
+        if (options.customColorButtons) {
+            picker.setAttribute('custom-color-buttons', options.customColorButtons);
+        }
+        if (options.customColorNavigation) {
+            picker.setAttribute('custom-color-navigation', options.customColorNavigation);
+        }
+        if (options.customColorAlternative) {
+            picker.setAttribute('custom-color-alternative', options.customColorAlternative);
+        }
+        if (options.customColorBackground) {
+            picker.setAttribute('custom-color-background', options.customColorBackground);
         }
 
         picker.addEventListener('theme-change', function(e) {
