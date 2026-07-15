@@ -218,7 +218,19 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
             }
         }
 
-        presetsArr.push(newPreset);
+        var existingIndex = -1;
+        for (var i = 0; i < presetsArr.length; i++) {
+            if (presetsArr[i].id === slug) {
+                existingIndex = i;
+                break;
+            }
+        }
+
+        if (existingIndex !== -1) {
+            presetsArr[existingIndex] = newPreset;
+        } else {
+            presetsArr.push(newPreset);
+        }
         presetsTextarea.val(JSON.stringify(presetsArr, null, 2));
 
         var currentConfigObj = {};
@@ -258,34 +270,63 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
         presetUI.append(presetInput).append(presetButton);
         $(pickerEl).after(presetUI);
 
-        var currentConfigStr = textarea.val();
-        var isCustom = false;
-        try {
-            var parsed = JSON.parse(currentConfigStr);
-            if (parsed.theme === 'custom') {
-                isCustom = true;
+        var checkPresetExists = function(val) {
+            var slug = val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+            var presetsStr = presetsTextarea.val();
+            var presetsArr = [];
+            if (presetsStr && presetsStr.trim() !== '') {
+                try {
+                    presetsArr = JSON.parse(presetsStr);
+                } catch (e) {}
             }
-        } catch (e) {
-            // Ignore
-        }
+            for (var i = 0; i < presetsArr.length; i++) {
+                if (presetsArr[i].id === slug) {
+                    return true;
+                }
+            }
+            return false;
+        };
 
-        if (!isCustom) {
-            presetUI.addClass('d-none').removeClass('d-flex');
-        }
+        presetInput.on('input', function() {
+            var exists = checkPresetExists($(this).val().trim());
+            presetButton.text(exists ? (uiTranslations.update_preset || 'Update preset') : uiTranslations.save_new_preset);
+        });
 
         var bindVisibilityToggle = function(pickerInstance) {
             pickerInstance.addEventListener('theme-change', function(e) {
                 if (e.detail && e.detail.theme) {
-                    if (e.detail.theme === 'custom') {
-                        presetUI.removeClass('d-none').addClass('d-flex');
-                    } else {
+                    var themeName = e.detail.theme;
+
+                    if (themeName !== 'custom') {
                         presetUI.addClass('d-none').removeClass('d-flex');
+                        presetInput.val('');
+                        presetButton.text(uiTranslations.save_new_preset);
+                    } else {
+                        presetUI.removeClass('d-none').addClass('d-flex');
+                        var buttonText = checkPresetExists(presetInput.val().trim())
+                            ? (uiTranslations.update_preset || 'Update preset')
+                            : uiTranslations.save_new_preset;
+                        presetButton.text(buttonText);
                     }
                 }
             });
         };
 
         bindVisibilityToggle(pickerEl);
+
+        // Initial setup for visibility based on current config
+        var currentConfigStr = textarea.val();
+        try {
+            var parsed = JSON.parse(currentConfigStr);
+            var themeName = parsed.theme || 'daylight';
+            if (themeName !== 'custom') {
+                presetUI.addClass('d-none').removeClass('d-flex');
+            } else {
+                presetUI.removeClass('d-none').addClass('d-flex');
+            }
+        } catch (e) {
+            presetUI.addClass('d-none').removeClass('d-flex');
+        }
 
         var listContainer = $('<div class="mt-4"></div>');
         presetUI.after(listContainer);
@@ -313,7 +354,40 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
             presetsArr.forEach(function(preset) {
                 var li = $('<li class="list-group-item d-flex ' +
                     'justify-content-between align-items-center p-2"></li>');
-                li.text(preset.name || preset.id);
+
+                var nameSpan = $('<span></span>').text(preset.name || preset.id);
+                li.append(nameSpan);
+
+                var actionsDiv = $('<div></div>');
+
+                var editBtn = $('<button type="button" class="btn btn-sm btn-outline-primary me-2">' +
+                    (uiTranslations.edit || 'Edit') + '</button>');
+                editBtn.on('click', function(e) {
+                    e.preventDefault();
+
+                    var currentConfigObj = {};
+                    var currentConfig = textarea.val();
+                    if (currentConfig) {
+                        try {
+                            currentConfigObj = JSON.parse(currentConfig);
+                        } catch (err) {}
+                    }
+                    currentConfigObj.theme = 'custom';
+                    if (preset.colors) {
+                         currentConfigObj.colors = preset.colors;
+                    }
+                    textarea.val(JSON.stringify(currentConfigObj, null, 2));
+
+                    var newPickerEl = createPicker(textarea, presetsTextarea);
+                    $(pickerEl).replaceWith(newPickerEl);
+                    pickerEl = newPickerEl;
+                    bindVisibilityToggle(pickerEl);
+
+                    presetInput.val(preset.name || preset.id);
+                    presetButton.text(uiTranslations.update_preset || 'Update preset');
+                    presetUI.removeClass('d-none').addClass('d-flex');
+                });
+
                 var delBtn = $('<button type="button" class="btn btn-sm btn-outline-danger">' +
                     uiTranslations.delete + '</button>');
                 delBtn.on('click', function(e) {
@@ -354,7 +428,8 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
                         }
                     );
                 });
-                li.append(delBtn);
+                actionsDiv.append(editBtn).append(delBtn);
+                li.append(actionsDiv);
                 ul.append(li);
             });
         };
@@ -367,7 +442,7 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
             if (newPicker) {
                 pickerEl = newPicker;
                 bindVisibilityToggle(pickerEl);
-                presetUI.addClass('d-none').removeClass('d-flex');
+                presetButton.text(uiTranslations.update_preset || 'Update preset');
                 renderList();
             }
         });
@@ -411,7 +486,9 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
             'delete': strs[23],
             'confirm_delete_preset': strs[24],
             'confirm': strs[25],
-            'cancel': strs[26]
+            'cancel': strs[26],
+            'edit': strs[27],
+            'update_preset': strs[28]
         };
 
         var activePresetsTextarea = null;
@@ -446,7 +523,7 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
         init: function() {
             var script = document.createElement('script');
             script.type = 'module';
-            script.src = cfg.wwwroot + '/local/h5pthemer/js/h5p-theme-picker.js';
+            script.src = cfg.wwwroot + '/local/h5pthemer/js/h5p-theme-picker.js?rev=' + cfg.jsrev;
             document.head.appendChild(script);
 
             $(document).ready(function() {
@@ -503,7 +580,9 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
                     {key: 'delete', component: 'local_h5pthemer'},
                     {key: 'confirm_delete_preset', component: 'local_h5pthemer'},
                     {key: 'confirm', component: 'core'},
-                    {key: 'cancel', component: 'core'}
+                    {key: 'cancel', component: 'core'},
+                    {key: 'edit', component: 'core'},
+                    {key: 'update_preset', component: 'local_h5pthemer'}
                 ]).done(function(strs) {
                     initializeUI(textarea, presetsTextarea, presetsReadonly, strs);
                 }).fail(function() {

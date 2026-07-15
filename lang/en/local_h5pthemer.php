@@ -58,3 +58,4 @@ $string['selector_theme_value_sunset'] = 'Sunset';
 $string['settings'] = 'H5P Themer Settings';
 $string['themecolors'] = 'Theme Colors';
 $string['themecolors_desc'] = 'Select the colors for your H5P content using the theme picker. The generated CSS variables will be applied to H5P elements.';
+$string['update_preset'] = 'Update preset';
