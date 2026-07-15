@@ -173,7 +173,7 @@ define(['jquery', 'core/config'], function($, coreConfig) {
                             fetchingPromise = $.ajax({
                                 url: coreConfig.wwwroot + '/local/h5pthemer/ajax.php',
                                 type: 'GET',
-                                data: { courseid: courseId },
+                                data: {courseid: courseId},
                                 dataType: 'json'
                             }).done(function(data) {
                                 config = data || {};

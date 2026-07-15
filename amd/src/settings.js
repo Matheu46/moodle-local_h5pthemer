@@ -40,14 +40,14 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
     }
 
     /**
-     * Helper to create and configure a new h5p-theme-picker DOM element.
+     * Parses the current theme and colors settings from textarea.
      *
      * @param {jQuery} textarea
      * @param {jQuery} presetsTextarea
      * @param {Object} translations
-     * @returns {HTMLElement}
+     * @returns {Object} Picker options
      */
-    function createPicker(textarea, presetsTextarea, translations) {
+    function parsePickerOptions(textarea, presetsTextarea, translations) {
         var options = {};
 
         translations = translations || componentTranslations;
@@ -67,18 +67,17 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
                 }
                 if (savedConfig.theme === 'custom' && savedConfig.colors) {
                     var colors = savedConfig.colors;
-                    if (colors['--h5p-theme-main-cta-base']) {
-                        options.customColorButtons = colors['--h5p-theme-main-cta-base'];
-                    }
-                    if (colors['--h5p-theme-secondary-cta-base']) {
-                        options.customColorNavigation = colors['--h5p-theme-secondary-cta-base'];
-                    }
-                    if (colors['--h5p-theme-alternative-base']) {
-                        options.customColorAlternative = colors['--h5p-theme-alternative-base'];
-                    }
-                    if (colors['--h5p-theme-background']) {
-                        options.customColorBackground = colors['--h5p-theme-background'];
-                    }
+                    var colorMap = {
+                        '--h5p-theme-main-cta-base': 'customColorButtons',
+                        '--h5p-theme-secondary-cta-base': 'customColorNavigation',
+                        '--h5p-theme-alternative-base': 'customColorAlternative',
+                        '--h5p-theme-background': 'customColorBackground'
+                    };
+                    Object.keys(colorMap).forEach(function(key) {
+                        if (colors[key]) {
+                            options[colorMap[key]] = colors[key];
+                        }
+                    });
                 }
             } catch (e) {
                 // Ignore parse errors on init.
@@ -98,6 +97,20 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
             }
         }
 
+        return options;
+    }
+
+    /**
+     * Helper to create and configure a new h5p-theme-picker DOM element.
+     *
+     * @param {jQuery} textarea
+     * @param {jQuery} presetsTextarea
+     * @param {Object} translations
+     * @returns {HTMLElement}
+     */
+    function createPicker(textarea, presetsTextarea, translations) {
+        var options = parsePickerOptions(textarea, presetsTextarea, translations);
+
         var PickerClass = customElements.get('h5p-theme-picker');
         var picker;
 
@@ -105,23 +118,16 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
         // because the component currently reads them synchronously before we have a chance to set them.
         var originalGetAttribute = HTMLElement.prototype.getAttribute;
         HTMLElement.prototype.getAttribute = function(name) {
-            if (name === 'custom-color-buttons' && options.customColorButtons) {
-                return options.customColorButtons;
-            }
-            if (name === 'custom-color-navigation' && options.customColorNavigation) {
-                return options.customColorNavigation;
-            }
-            if (name === 'custom-color-alternative' && options.customColorAlternative) {
-                return options.customColorAlternative;
-            }
-            if (name === 'custom-color-background' && options.customColorBackground) {
-                return options.customColorBackground;
-            }
-            if (name === 'theme-name' && options.theme) {
-                return options.theme;
-            }
-            if (name === 'density' && options.density) {
-                return options.density;
+            var mapping = {
+                'custom-color-buttons': options.customColorButtons,
+                'custom-color-navigation': options.customColorNavigation,
+                'custom-color-alternative': options.customColorAlternative,
+                'custom-color-background': options.customColorBackground,
+                'theme-name': options.theme,
+                'density': options.density
+            };
+            if (mapping[name]) {
+                return mapping[name];
             }
             return originalGetAttribute.call(this, name);
         };
@@ -135,24 +141,19 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
             HTMLElement.prototype.getAttribute = originalGetAttribute;
         }
 
-        if (options.theme) {
-            picker.setAttribute('theme-name', options.theme);
-        }
-        if (options.density) {
-            picker.setAttribute('density', options.density);
-        }
-        if (options.customColorButtons) {
-            picker.setAttribute('custom-color-buttons', options.customColorButtons);
-        }
-        if (options.customColorNavigation) {
-            picker.setAttribute('custom-color-navigation', options.customColorNavigation);
-        }
-        if (options.customColorAlternative) {
-            picker.setAttribute('custom-color-alternative', options.customColorAlternative);
-        }
-        if (options.customColorBackground) {
-            picker.setAttribute('custom-color-background', options.customColorBackground);
-        }
+        var attributes = {
+            'theme-name': options.theme,
+            'density': options.density,
+            'custom-color-buttons': options.customColorButtons,
+            'custom-color-navigation': options.customColorNavigation,
+            'custom-color-alternative': options.customColorAlternative,
+            'custom-color-background': options.customColorBackground
+        };
+        Object.keys(attributes).forEach(function(key) {
+            if (attributes[key]) {
+                picker.setAttribute(key, attributes[key]);
+            }
+        });
 
         picker.addEventListener('theme-change', function(e) {
             var details = e.detail;
@@ -297,7 +298,9 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
                         if (existingPresetsStr && existingPresetsStr.trim() !== '') {
                             try {
                                 presetsArr = JSON.parse(existingPresetsStr);
-                            } catch (e) {}
+                            } catch (e) {
+                                // Ignore JSON parsing error.
+                            }
                         }
 
                         var existingIndex = -1;
@@ -327,7 +330,9 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
                         if (currentConfigStr) {
                             try {
                                 currentConfig = JSON.parse(currentConfigStr);
-                            } catch (err) {}
+                            } catch (err) {
+                                // Ignore JSON parsing error.
+                            }
                         }
                         currentConfig.theme = 'custom';
                         currentConfig.colors = data.colors;
@@ -367,7 +372,9 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
             if (presetsStr && presetsStr.trim() !== '') {
                 try {
                     presetsArr = JSON.parse(presetsStr);
-                } catch (e) {}
+                } catch (e) {
+                    // Ignore JSON parsing error.
+                }
             }
             for (var i = 0; i < presetsArr.length; i++) {
                 if (presetsArr[i].id === slug) {
@@ -460,7 +467,9 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
                     if (currentConfig) {
                         try {
                             currentConfigObj = JSON.parse(currentConfig);
-                        } catch (err) {}
+                        } catch (err) {
+                            // Ignore JSON parsing error.
+                        }
                     }
                     currentConfigObj.theme = 'custom';
                     if (preset.colors) {
