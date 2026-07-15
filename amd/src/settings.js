@@ -267,8 +267,98 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
         btnHtml += uiTranslations.save_new_preset + '</button>';
         var presetButton = $(btnHtml);
 
-        presetUI.append(presetInput).append(presetButton);
+        var fileInput = $('<input type="file" accept=".json" class="d-none">');
+        var importBtnText = uiTranslations.importpreset || 'Import preset';
+        var importButton = $('<button type="button" class="btn btn-outline-secondary">' +
+            importBtnText + '</button>');
+
+        presetUI.append(presetInput).append(presetButton).append(importButton).append(fileInput);
         $(pickerEl).after(presetUI);
+
+        importButton.on('click', function(e) {
+            e.preventDefault();
+            fileInput.click();
+        });
+
+        fileInput.on('change', function(e) {
+            var file = e.target.files[0];
+            if (!file) {
+                return;
+            }
+            var reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    var data = JSON.parse(evt.target.result);
+                    if (data && data.id && data.colors) {
+                        var slug = data.id.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                        var name = data.name || data.id;
+                        var existingPresetsStr = presetsTextarea.val();
+                        var presetsArr = [];
+                        if (existingPresetsStr && existingPresetsStr.trim() !== '') {
+                            try {
+                                presetsArr = JSON.parse(existingPresetsStr);
+                            } catch (e) {}
+                        }
+
+                        var existingIndex = -1;
+                        for (var i = 0; i < presetsArr.length; i++) {
+                            if (presetsArr[i].id === slug) {
+                                existingIndex = i;
+                                break;
+                            }
+                        }
+
+                        var newPreset = {
+                            id: slug,
+                            name: name,
+                            colors: data.colors
+                        };
+
+                        if (existingIndex !== -1) {
+                            presetsArr[existingIndex] = newPreset;
+                        } else {
+                            presetsArr.push(newPreset);
+                        }
+
+                        presetsTextarea.val(JSON.stringify(presetsArr, null, 2));
+
+                        var currentConfigStr = textarea.val();
+                        var currentConfig = {};
+                        if (currentConfigStr) {
+                            try {
+                                currentConfig = JSON.parse(currentConfigStr);
+                            } catch (err) {}
+                        }
+                        currentConfig.theme = 'custom';
+                        currentConfig.colors = data.colors;
+                        textarea.val(JSON.stringify(currentConfig, null, 2));
+
+                        var newPickerEl = createPicker(textarea, presetsTextarea);
+                        $(pickerEl).replaceWith(newPickerEl);
+                        pickerEl = newPickerEl;
+                        bindVisibilityToggle(pickerEl);
+
+                        presetInput.val(name);
+                        presetButton.text(uiTranslations.update_preset || 'Update preset');
+                        presetUI.removeClass('d-none').addClass('d-flex');
+
+                        renderList();
+                    } else {
+                        notification.addNotification({
+                            message: uiTranslations.importpreset_error || 'Invalid preset file format.',
+                            type: 'error'
+                        });
+                    }
+                } catch (err) {
+                    notification.addNotification({
+                        message: uiTranslations.importpreset_error || 'Invalid preset file format.',
+                        type: 'error'
+                    });
+                }
+                fileInput.val('');
+            };
+            reader.readAsText(file);
+        });
 
         var checkPresetExists = function(val) {
             var slug = val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -428,7 +518,25 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
                         }
                     );
                 });
-                actionsDiv.append(editBtn).append(delBtn);
+
+                var exportBtn = $('<button type="button" class="btn btn-sm btn-outline-info me-2">' +
+                    (uiTranslations.export || 'Export') + '</button>');
+                exportBtn.on('click', function(e) {
+                    e.preventDefault();
+                    var blob = new Blob([JSON.stringify(preset, null, 2)], {type: "application/json"});
+                    var url = URL.createObjectURL(blob);
+                    var a = document.createElement("a");
+                    a.href = url;
+                    a.download = (preset.id || 'preset') + '.json';
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(function() {
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(url);
+                    }, 0);
+                });
+
+                actionsDiv.append(editBtn).append(exportBtn).append(delBtn);
                 li.append(actionsDiv);
                 ul.append(li);
             });
@@ -488,7 +596,10 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
             'confirm': strs[25],
             'cancel': strs[26],
             'edit': strs[27],
-            'update_preset': strs[28]
+            'update_preset': strs[28],
+            'export': strs[29],
+            'importpreset': strs[30],
+            'importpreset_error': strs[31]
         };
 
         var activePresetsTextarea = null;
@@ -582,7 +693,10 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
                     {key: 'confirm', component: 'core'},
                     {key: 'cancel', component: 'core'},
                     {key: 'edit', component: 'core'},
-                    {key: 'update_preset', component: 'local_h5pthemer'}
+                    {key: 'update_preset', component: 'local_h5pthemer'},
+                    {key: 'export', component: 'local_h5pthemer'},
+                    {key: 'importpreset', component: 'local_h5pthemer'},
+                    {key: 'importpreset_error', component: 'local_h5pthemer'}
                 ]).done(function(strs) {
                     initializeUI(textarea, presetsTextarea, presetsReadonly, strs);
                 }).fail(function() {
