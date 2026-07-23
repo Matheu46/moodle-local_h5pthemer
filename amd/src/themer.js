@@ -6,13 +6,14 @@
  * @copyright  2026 Matheus Mathias
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define(['jquery'], function($) {
+define(['jquery', 'core/config'], function($, coreConfig) {
     const VALID_DENSITY_CLASSES = ['h5p-large', 'h5p-medium', 'h5p-small'];
 
     return {
-        init: function(pluginConfig) {
+        init: function(courseId) {
             $(document).ready(function() {
-                var config = pluginConfig || {};
+                var config = null;
+                var fetchingPromise = null;
 
                 /**
                  * Injects custom CSS variables into the iframe document's head.
@@ -125,7 +126,7 @@ define(['jquery'], function($) {
                         // it completely "done" until those inner iframes are also processed.
                         // But we return true to stop polling the *outer* iframe, since the
                         // inner ones have their own polling interval now.
-                        return true; // Finished successfully
+                        return true;
 
                     } catch (e) {
                         return false;
@@ -161,7 +162,37 @@ define(['jquery'], function($) {
                 }
 
                 var processAllIframes = function() {
-                    $('iframe.h5p-iframe, iframe.h5p-player').each(function() {
+                    var iframes = $('iframe.h5p-iframe, iframe.h5p-player');
+                    if (iframes.length === 0) {
+                        return; // No iframes found yet.
+                    }
+
+                    // Fetch config via AJAX if we haven't already.
+                    if (!config) {
+                        if (!fetchingPromise) {
+                            fetchingPromise = $.ajax({
+                                url: coreConfig.wwwroot + '/local/h5pthemer/ajax.php',
+                                type: 'GET',
+                                data: {courseid: courseId},
+                                dataType: 'json'
+                            }).done(function(data) {
+                                config = data || {};
+                            }).fail(function() {
+                                config = {}; // Fallback to empty
+                            });
+                        }
+
+                        fetchingPromise.done(function() {
+                            iframes.each(function() {
+                                setupPolling(this);
+                                processIframe(this);
+                            });
+                        });
+                        return;
+                    }
+
+                    // Config is already loaded, process normally.
+                    iframes.each(function() {
                         setupPolling(this);
                         processIframe(this);
                     });

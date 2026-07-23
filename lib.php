@@ -31,25 +31,11 @@
 function local_h5pthemer_extend_navigation(navigation_node $navigation) {
     global $PAGE, $COURSE;
 
-    $jsonconfig = get_config('local_h5pthemer', 'css_variables');
-    $config = [];
-    if ($jsonconfig) {
-        $config = json_decode($jsonconfig, true);
-    }
+    $courseid = (!empty($COURSE->id)) ? $COURSE->id : SITEID;
 
-    // Override with course level config if it exists.
-    if (!empty($COURSE->id) && $COURSE->id != SITEID) {
-        $courseconfigjson = get_config('local_h5pthemer', "course_{$COURSE->id}_config");
-        if ($courseconfigjson) {
-            $courseconfig = json_decode($courseconfigjson, true);
-            if (!empty($courseconfig['theme']) && $courseconfig['theme'] !== 'default') {
-                $config = $courseconfig;
-            }
-        }
-    }
-
-    // We load the themer AMD module which will look for H5P iframes and inject variables.
-    $PAGE->requires->js_call_amd('local_h5pthemer/themer', 'init', [$config]);
+    // We load the themer AMD module which will look for H5P iframes.
+    // It will fetch the configuration via AJAX only if an iframe is found.
+    $PAGE->requires->js_call_amd('local_h5pthemer/themer', 'init', [$courseid]);
 }
 
 /**

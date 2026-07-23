@@ -40,14 +40,14 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
     }
 
     /**
-     * Helper to create and configure a new h5p-theme-picker DOM element.
+     * Parses the current theme and colors settings from textarea.
      *
      * @param {jQuery} textarea
      * @param {jQuery} presetsTextarea
      * @param {Object} translations
-     * @returns {HTMLElement}
+     * @returns {Object} Picker options
      */
-    function createPicker(textarea, presetsTextarea, translations) {
+    function parsePickerOptions(textarea, presetsTextarea, translations) {
         var options = {};
 
         translations = translations || componentTranslations;
@@ -67,18 +67,17 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
                 }
                 if (savedConfig.theme === 'custom' && savedConfig.colors) {
                     var colors = savedConfig.colors;
-                    if (colors['--h5p-theme-main-cta-base']) {
-                        options.customColorButtons = colors['--h5p-theme-main-cta-base'];
-                    }
-                    if (colors['--h5p-theme-secondary-cta-base']) {
-                        options.customColorNavigation = colors['--h5p-theme-secondary-cta-base'];
-                    }
-                    if (colors['--h5p-theme-alternative-base']) {
-                        options.customColorAlternative = colors['--h5p-theme-alternative-base'];
-                    }
-                    if (colors['--h5p-theme-background']) {
-                        options.customColorBackground = colors['--h5p-theme-background'];
-                    }
+                    var colorMap = {
+                        '--h5p-theme-main-cta-base': 'customColorButtons',
+                        '--h5p-theme-secondary-cta-base': 'customColorNavigation',
+                        '--h5p-theme-alternative-base': 'customColorAlternative',
+                        '--h5p-theme-background': 'customColorBackground'
+                    };
+                    Object.keys(colorMap).forEach(function(key) {
+                        if (colors[key]) {
+                            options[colorMap[key]] = colors[key];
+                        }
+                    });
                 }
             } catch (e) {
                 // Ignore parse errors on init.
@@ -98,13 +97,63 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
             }
         }
 
+        return options;
+    }
+
+    /**
+     * Helper to create and configure a new h5p-theme-picker DOM element.
+     *
+     * @param {jQuery} textarea
+     * @param {jQuery} presetsTextarea
+     * @param {Object} translations
+     * @returns {HTMLElement}
+     */
+    function createPicker(textarea, presetsTextarea, translations) {
+        var options = parsePickerOptions(textarea, presetsTextarea, translations);
+
         var PickerClass = customElements.get('h5p-theme-picker');
         var picker;
-        if (PickerClass) {
-            picker = new PickerClass(options);
-        } else {
-            picker = document.createElement('h5p-theme-picker');
+
+        // Temporarily monkey-patch getAttribute to provide the attributes to the Web Component's constructor
+        // because the component currently reads them synchronously before we have a chance to set them.
+        var originalGetAttribute = HTMLElement.prototype.getAttribute;
+        HTMLElement.prototype.getAttribute = function(name) {
+            var mapping = {
+                'custom-color-buttons': options.customColorButtons,
+                'custom-color-navigation': options.customColorNavigation,
+                'custom-color-alternative': options.customColorAlternative,
+                'custom-color-background': options.customColorBackground,
+                'theme-name': options.theme,
+                'density': options.density
+            };
+            if (mapping[name]) {
+                return mapping[name];
+            }
+            return originalGetAttribute.call(this, name);
+        };
+        try {
+            if (PickerClass) {
+                picker = new PickerClass(options);
+            } else {
+                picker = document.createElement('h5p-theme-picker');
+            }
+        } finally {
+            HTMLElement.prototype.getAttribute = originalGetAttribute;
         }
+
+        var attributes = {
+            'theme-name': options.theme,
+            'density': options.density,
+            'custom-color-buttons': options.customColorButtons,
+            'custom-color-navigation': options.customColorNavigation,
+            'custom-color-alternative': options.customColorAlternative,
+            'custom-color-background': options.customColorBackground
+        };
+        Object.keys(attributes).forEach(function(key) {
+            if (attributes[key]) {
+                picker.setAttribute(key, attributes[key]);
+            }
+        });
 
         picker.addEventListener('theme-change', function(e) {
             var details = e.detail;
@@ -170,7 +219,19 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
             }
         }
 
-        presetsArr.push(newPreset);
+        var existingIndex = -1;
+        for (var i = 0; i < presetsArr.length; i++) {
+            if (presetsArr[i].id === slug) {
+                existingIndex = i;
+                break;
+            }
+        }
+
+        if (existingIndex !== -1) {
+            presetsArr[existingIndex] = newPreset;
+        } else {
+            presetsArr.push(newPreset);
+        }
         presetsTextarea.val(JSON.stringify(presetsArr, null, 2));
 
         var currentConfigObj = {};
@@ -207,37 +268,162 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
         btnHtml += uiTranslations.save_new_preset + '</button>';
         var presetButton = $(btnHtml);
 
-        presetUI.append(presetInput).append(presetButton);
+        var fileInput = $('<input type="file" accept=".json" class="d-none">');
+        var importBtnText = uiTranslations.importpreset || 'Import preset';
+        var importButton = $('<button type="button" class="btn btn-outline-secondary">' +
+            importBtnText + '</button>');
+
+        presetUI.append(presetInput).append(presetButton).append(importButton).append(fileInput);
         $(pickerEl).after(presetUI);
 
-        var currentConfigStr = textarea.val();
-        var isCustom = false;
-        try {
-            var parsed = JSON.parse(currentConfigStr);
-            if (parsed.theme === 'custom') {
-                isCustom = true;
-            }
-        } catch (e) {
-            // Ignore
-        }
+        importButton.on('click', function(e) {
+            e.preventDefault();
+            fileInput.click();
+        });
 
-        if (!isCustom) {
-            presetUI.addClass('d-none').removeClass('d-flex');
-        }
+        fileInput.on('change', function(e) {
+            var file = e.target.files[0];
+            if (!file) {
+                return;
+            }
+            var reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    var data = JSON.parse(evt.target.result);
+                    if (data && data.id && data.colors) {
+                        var slug = data.id.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                        var name = data.name || data.id;
+                        var existingPresetsStr = presetsTextarea.val();
+                        var presetsArr = [];
+                        if (existingPresetsStr && existingPresetsStr.trim() !== '') {
+                            try {
+                                presetsArr = JSON.parse(existingPresetsStr);
+                            } catch (e) {
+                                // Ignore JSON parsing error.
+                            }
+                        }
+
+                        var existingIndex = -1;
+                        for (var i = 0; i < presetsArr.length; i++) {
+                            if (presetsArr[i].id === slug) {
+                                existingIndex = i;
+                                break;
+                            }
+                        }
+
+                        var newPreset = {
+                            id: slug,
+                            name: name,
+                            colors: data.colors
+                        };
+
+                        if (existingIndex !== -1) {
+                            presetsArr[existingIndex] = newPreset;
+                        } else {
+                            presetsArr.push(newPreset);
+                        }
+
+                        presetsTextarea.val(JSON.stringify(presetsArr, null, 2));
+
+                        var currentConfigStr = textarea.val();
+                        var currentConfig = {};
+                        if (currentConfigStr) {
+                            try {
+                                currentConfig = JSON.parse(currentConfigStr);
+                            } catch (err) {
+                                // Ignore JSON parsing error.
+                            }
+                        }
+                        currentConfig.theme = 'custom';
+                        currentConfig.colors = data.colors;
+                        textarea.val(JSON.stringify(currentConfig, null, 2));
+
+                        var newPickerEl = createPicker(textarea, presetsTextarea);
+                        $(pickerEl).replaceWith(newPickerEl);
+                        pickerEl = newPickerEl;
+                        bindVisibilityToggle(pickerEl);
+
+                        presetInput.val(name);
+                        presetButton.text(uiTranslations.update_preset || 'Update preset');
+                        presetUI.removeClass('d-none').addClass('d-flex');
+
+                        renderList();
+                    } else {
+                        notification.addNotification({
+                            message: uiTranslations.importpreset_error || 'Invalid preset file format.',
+                            type: 'error'
+                        });
+                    }
+                } catch (err) {
+                    notification.addNotification({
+                        message: uiTranslations.importpreset_error || 'Invalid preset file format.',
+                        type: 'error'
+                    });
+                }
+                fileInput.val('');
+            };
+            reader.readAsText(file);
+        });
+
+        var checkPresetExists = function(val) {
+            var slug = val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+            var presetsStr = presetsTextarea.val();
+            var presetsArr = [];
+            if (presetsStr && presetsStr.trim() !== '') {
+                try {
+                    presetsArr = JSON.parse(presetsStr);
+                } catch (e) {
+                    // Ignore JSON parsing error.
+                }
+            }
+            for (var i = 0; i < presetsArr.length; i++) {
+                if (presetsArr[i].id === slug) {
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        presetInput.on('input', function() {
+            var exists = checkPresetExists($(this).val().trim());
+            presetButton.text(exists ? (uiTranslations.update_preset || 'Update preset') : uiTranslations.save_new_preset);
+        });
 
         var bindVisibilityToggle = function(pickerInstance) {
             pickerInstance.addEventListener('theme-change', function(e) {
                 if (e.detail && e.detail.theme) {
-                    if (e.detail.theme === 'custom') {
-                        presetUI.removeClass('d-none').addClass('d-flex');
-                    } else {
+                    var themeName = e.detail.theme;
+
+                    if (themeName !== 'custom') {
                         presetUI.addClass('d-none').removeClass('d-flex');
+                        presetInput.val('');
+                        presetButton.text(uiTranslations.save_new_preset);
+                    } else {
+                        presetUI.removeClass('d-none').addClass('d-flex');
+                        var buttonText = checkPresetExists(presetInput.val().trim())
+                            ? (uiTranslations.update_preset || 'Update preset')
+                            : uiTranslations.save_new_preset;
+                        presetButton.text(buttonText);
                     }
                 }
             });
         };
 
         bindVisibilityToggle(pickerEl);
+
+        // Initial setup for visibility based on current config
+        var currentConfigStr = textarea.val();
+        try {
+            var parsed = JSON.parse(currentConfigStr);
+            var themeName = parsed.theme || 'daylight';
+            if (themeName !== 'custom') {
+                presetUI.addClass('d-none').removeClass('d-flex');
+            } else {
+                presetUI.removeClass('d-none').addClass('d-flex');
+            }
+        } catch (e) {
+            presetUI.addClass('d-none').removeClass('d-flex');
+        }
 
         var listContainer = $('<div class="mt-4"></div>');
         presetUI.after(listContainer);
@@ -265,7 +451,42 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
             presetsArr.forEach(function(preset) {
                 var li = $('<li class="list-group-item d-flex ' +
                     'justify-content-between align-items-center p-2"></li>');
-                li.text(preset.name || preset.id);
+
+                var nameSpan = $('<span></span>').text(preset.name || preset.id);
+                li.append(nameSpan);
+
+                var actionsDiv = $('<div></div>');
+
+                var editBtn = $('<button type="button" class="btn btn-sm btn-outline-primary me-2">' +
+                    (uiTranslations.edit || 'Edit') + '</button>');
+                editBtn.on('click', function(e) {
+                    e.preventDefault();
+
+                    var currentConfigObj = {};
+                    var currentConfig = textarea.val();
+                    if (currentConfig) {
+                        try {
+                            currentConfigObj = JSON.parse(currentConfig);
+                        } catch (err) {
+                            // Ignore JSON parsing error.
+                        }
+                    }
+                    currentConfigObj.theme = 'custom';
+                    if (preset.colors) {
+                         currentConfigObj.colors = preset.colors;
+                    }
+                    textarea.val(JSON.stringify(currentConfigObj, null, 2));
+
+                    var newPickerEl = createPicker(textarea, presetsTextarea);
+                    $(pickerEl).replaceWith(newPickerEl);
+                    pickerEl = newPickerEl;
+                    bindVisibilityToggle(pickerEl);
+
+                    presetInput.val(preset.name || preset.id);
+                    presetButton.text(uiTranslations.update_preset || 'Update preset');
+                    presetUI.removeClass('d-none').addClass('d-flex');
+                });
+
                 var delBtn = $('<button type="button" class="btn btn-sm btn-outline-danger">' +
                     uiTranslations.delete + '</button>');
                 delBtn.on('click', function(e) {
@@ -306,7 +527,26 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
                         }
                     );
                 });
-                li.append(delBtn);
+
+                var exportBtn = $('<button type="button" class="btn btn-sm btn-outline-info me-2">' +
+                    (uiTranslations.export || 'Export') + '</button>');
+                exportBtn.on('click', function(e) {
+                    e.preventDefault();
+                    var blob = new Blob([JSON.stringify(preset, null, 2)], {type: "application/json"});
+                    var url = URL.createObjectURL(blob);
+                    var a = document.createElement("a");
+                    a.href = url;
+                    a.download = (preset.id || 'preset') + '.json';
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(function() {
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(url);
+                    }, 0);
+                });
+
+                actionsDiv.append(editBtn).append(exportBtn).append(delBtn);
+                li.append(actionsDiv);
                 ul.append(li);
             });
         };
@@ -319,7 +559,7 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
             if (newPicker) {
                 pickerEl = newPicker;
                 bindVisibilityToggle(pickerEl);
-                presetUI.addClass('d-none').removeClass('d-flex');
+                presetButton.text(uiTranslations.update_preset || 'Update preset');
                 renderList();
             }
         });
@@ -363,7 +603,12 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
             'delete': strs[23],
             'confirm_delete_preset': strs[24],
             'confirm': strs[25],
-            'cancel': strs[26]
+            'cancel': strs[26],
+            'edit': strs[27],
+            'update_preset': strs[28],
+            'export': strs[29],
+            'importpreset': strs[30],
+            'importpreset_error': strs[31]
         };
 
         var activePresetsTextarea = null;
@@ -398,7 +643,7 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
         init: function() {
             var script = document.createElement('script');
             script.type = 'module';
-            script.src = cfg.wwwroot + '/local/h5pthemer/js/h5p-theme-picker.js';
+            script.src = cfg.wwwroot + '/local/h5pthemer/js/h5p-theme-picker.js?rev=' + cfg.jsrev;
             document.head.appendChild(script);
 
             $(document).ready(function() {
@@ -455,7 +700,12 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
                     {key: 'delete', component: 'local_h5pthemer'},
                     {key: 'confirm_delete_preset', component: 'local_h5pthemer'},
                     {key: 'confirm', component: 'core'},
-                    {key: 'cancel', component: 'core'}
+                    {key: 'cancel', component: 'core'},
+                    {key: 'edit', component: 'core'},
+                    {key: 'update_preset', component: 'local_h5pthemer'},
+                    {key: 'export', component: 'local_h5pthemer'},
+                    {key: 'importpreset', component: 'local_h5pthemer'},
+                    {key: 'importpreset_error', component: 'local_h5pthemer'}
                 ]).done(function(strs) {
                     initializeUI(textarea, presetsTextarea, presetsReadonly, strs);
                 }).fail(function() {
