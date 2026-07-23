@@ -126,7 +126,7 @@ define(['jquery', 'core/config'], function($, coreConfig) {
                         // it completely "done" until those inner iframes are also processed.
                         // But we return true to stop polling the *outer* iframe, since the
                         // inner ones have their own polling interval now.
-                        return true; // Finished successfully
+                        return true;
 
                     } catch (e) {
                         return false;
