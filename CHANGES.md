@@ -2,6 +2,21 @@
 
 All notable changes to the **H5P Themer** (`local_h5pthemer`) plugin will be documented in this file.
 
+## [0.2.0] - 2026-07-23
+
+### Added
+- **AJAX Configuration Endpoint**: Introduced `ajax.php` to asynchronously serve course-level and site-level H5P theme settings.
+- **Preset Editing**: Added ability to edit existing custom presets directly in the administration settings page.
+- **Preset Import/Export**: Added functionality to export custom presets to JSON files and import preset configurations.
+- **Preset Deletion & Management**: Enhanced custom preset deletion handling and management within the H5P Theme Picker UI.
+
+### Changed / Refactored
+- **Asynchronous Theme Fetching**: Updated `themer.js` AMD module to fetch theme configurations via AJAX based on course ID instead of inline script execution.
+- **Modularized Settings Logic**: Refactored `settings.js` AMD module to modularize settings parsing, attribute assignment logic, and preset state management.
+
+### Dependencies
+- **H5P Theme Picker Update**: Updated third-party library `h5p-theme-picker` to version `0.0.13`.
+
 ## [0.1.0] - 2026-07-04
 
 This is the initial release of the plugin, introducing dynamic theme coloring and styling capabilities for H5P content in Moodle.
