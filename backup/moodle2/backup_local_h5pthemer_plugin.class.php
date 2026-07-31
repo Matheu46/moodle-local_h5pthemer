@@ -47,9 +47,9 @@ class backup_local_h5pthemer_plugin extends backup_local_plugin {
 
         $courseid = $this->step->get_task()->get_courseid();
         $configvalue = get_config('local_h5pthemer', "course_{$courseid}_config");
-        
+
         $coursenode->set_source_array([
-            ['id' => $courseid, 'configvalue' => $configvalue !== false ? $configvalue : '']
+            ['id' => $courseid, 'configvalue' => $configvalue !== false ? $configvalue : ''],
         ]);
 
         return $plugin;
