@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_h5pthemer';
-$plugin->release = '0.2.0';
-$plugin->version = 2026072300;
+$plugin->release = '0.3.0';
+$plugin->version = 2026073100;
 $plugin->requires = 2022041900;
 $plugin->maturity = MATURITY_ALPHA;

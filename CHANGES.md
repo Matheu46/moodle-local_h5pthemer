@@ -2,6 +2,11 @@
 
 All notable changes to the **H5P Themer** (`local_h5pthemer`) plugin will be documented in this file.
 
+## [0.3.0] - 2026-07-31
+
+### Added
+- **Backup and Restore**: Added backup and restore plugin classes.
+
 ## [0.2.0] - 2026-07-23
 
 ### Added
