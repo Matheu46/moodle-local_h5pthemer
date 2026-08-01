@@ -1,3 +1,18 @@
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
  * Themer AMD module for local_h5pthemer.
  * Intercepts H5P iframes and injects custom CSS variables and applies density.
@@ -6,7 +21,7 @@
  * @copyright  2026 Matheus Mathias
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define(['jquery', 'core/config'], function($, coreConfig) {
+define(['jquery', 'core/ajax'], function($, ajax) {
     const VALID_DENSITY_CLASSES = ['h5p-large', 'h5p-medium', 'h5p-small'];
 
     return {
@@ -167,18 +182,19 @@ define(['jquery', 'core/config'], function($, coreConfig) {
                         return; // No iframes found yet.
                     }
 
-                    // Fetch config via AJAX if we haven't already.
                     if (!config) {
                         if (!fetchingPromise) {
-                            fetchingPromise = $.ajax({
-                                url: coreConfig.wwwroot + '/local/h5pthemer/ajax.php',
-                                type: 'GET',
-                                data: {courseid: courseId},
-                                dataType: 'json'
-                            }).done(function(data) {
-                                config = data || {};
+                            fetchingPromise = ajax.call([{
+                                methodname: 'local_h5pthemer_get_config',
+                                args: {courseid: courseId}
+                            }])[0].done(function(response) {
+                                try {
+                                    config = typeof response === 'string' ? JSON.parse(response) : response;
+                                } catch (e) {
+                                    config = {};
+                                }
                             }).fail(function() {
-                                config = {}; // Fallback to empty
+                                config = {};
                             });
                         }
 

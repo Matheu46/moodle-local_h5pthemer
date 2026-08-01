@@ -34,7 +34,6 @@ function local_h5pthemer_extend_navigation(navigation_node $navigation) {
     $courseid = (!empty($COURSE->id)) ? $COURSE->id : SITEID;
 
     // We load the themer AMD module which will look for H5P iframes.
-    // It will fetch the configuration via AJAX only if an iframe is found.
     $PAGE->requires->js_call_amd('local_h5pthemer/themer', 'init', [$courseid]);
 }
 

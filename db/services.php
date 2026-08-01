@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Plugin version and other meta-data are defined here.
+ * Services definition for local_h5pthemer.
  *
  * @package     local_h5pthemer
  * @copyright   2026 Matheus Mathias
@@ -24,8 +24,13 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'local_h5pthemer';
-$plugin->release = '0.3.0';
-$plugin->version = 2026073101;
-$plugin->requires = 2022041900;
-$plugin->maturity = MATURITY_ALPHA;
+$functions = [
+    'local_h5pthemer_get_config' => [
+        'classname'     => 'local_h5pthemer\external\get_config',
+        'methodname'    => 'execute',
+        'description'   => 'Gets the H5P themer configuration.',
+        'type'          => 'read',
+        'ajax'          => true,
+        'loginrequired' => true,
+    ],
+];
