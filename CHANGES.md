@@ -2,6 +2,15 @@
 
 All notable changes to the **H5P Themer** (`local_h5pthemer`) plugin will be documented in this file.
 
+## [0.4.0] - 2026-08-01
+
+### Added
+- **External API**: Introduced a new external API method `get_config` to retrieve H5P Themer configuration based on course ID.
+- **Licensing**: Added Moodle licensing information to `settings.js` and `themer.js`.
+
+### Changed / Refactored
+- **Configuration Fetching**: Updated `themer.js` to use `core/ajax` for fetching configuration instead of `core/config`.
+
 ## [0.3.0] - 2026-07-31
 
 ### Added
