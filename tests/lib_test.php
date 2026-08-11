@@ -37,6 +37,8 @@ use PHPUnit\Framework\Attributes\CoversFunction;
  * @copyright   2026 Matheus Mathias
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
+// phpcs:disable moodle.PHPUnit.TestCaseCovers.Missing
 #[CoversFunction('local_h5pthemer_extend_navigation')]
 #[CoversFunction('local_h5pthemer_extend_navigation_course')]
 final class lib_test extends advanced_testcase {
