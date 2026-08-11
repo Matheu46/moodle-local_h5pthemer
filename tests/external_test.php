@@ -22,6 +22,8 @@ use core_external\external_api;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversFunction;
 
+// phpcs:disable moodle.PHPUnit.TestCaseCovers.Missing
+
 /**
  * External functions testcase for H5P Themer.
  *
@@ -30,8 +32,6 @@ use PHPUnit\Framework\Attributes\CoversFunction;
  * @copyright   2026 Matheus Mathias
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-// phpcs:disable moodle.PHPUnit.TestCaseCovers.Missing
 #[CoversClass(\local_h5pthemer\external\get_config::class)]
 final class external_test extends advanced_testcase {
     /**
