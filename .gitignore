@@ -28,3 +28,6 @@ vendor/
 # Moodle specific / Grunt
 # Note: amd/build/ is intentionally NOT ignored so the plugin works out-of-the-box
 .grunt/
+
+.prompts/
+AGENTS.md
