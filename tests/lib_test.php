@@ -28,6 +28,7 @@ use advanced_testcase;
 use context_course;
 use navigation_node;
 use moodle_url;
+use PHPUnit\Framework\Attributes\CoversFunction;
 
 /**
  * Unit tests for lib.php functions.
@@ -36,11 +37,14 @@ use moodle_url;
  * @copyright   2026 Matheus Mathias
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class lib_test extends advanced_testcase {
+#[CoversFunction('local_h5pthemer_extend_navigation')]
+#[CoversFunction('local_h5pthemer_extend_navigation_course')]
+final class lib_test extends advanced_testcase {
     /**
      * Setup before each test.
      */
     protected function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest();
     }
 

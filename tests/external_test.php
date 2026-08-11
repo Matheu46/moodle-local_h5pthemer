@@ -19,6 +19,8 @@ namespace local_h5pthemer;
 use advanced_testcase;
 use local_h5pthemer\external\get_config;
 use core_external\external_api;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversFunction;
 
 /**
  * External functions testcase for H5P Themer.
@@ -28,11 +30,13 @@ use core_external\external_api;
  * @copyright   2026 Matheus Mathias
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class external_test extends advanced_testcase {
+#[CoversClass(\local_h5pthemer\external\get_config::class)]
+final class external_test extends advanced_testcase {
     /**
      * Set up before each test.
      */
     protected function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest();
         $this->setAdminUser();
     }
