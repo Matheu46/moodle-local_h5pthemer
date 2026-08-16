@@ -1,0 +1,29 @@
+# Example .camp/listing.yml — lives in the PLUGIN's repository, not the index
+# (RFC §4.1). Authors update their listing with an ordinary commit; camp
+# ingests and hash-pins it at each tagged release. This example is what the
+# release tooling would scaffold for mod_cmi5launch.
+
+name: H5P Themer
+summary: Customize the visual themes (colors) and density of H5P content, supporting both mod_hvp and Moodle Core H5P.
+description: |
+  H5P Themer is a Moodle local plugin that allows administrators to centrally customize the visual themes (colors) and density of H5P content, supporting both the traditional mod_hvp plugin and the Moodle Core H5P system.
+  
+  Features:
+  - Simple Configuration Panel: Integrates the official h5p-theme-picker web component into Moodle's administration interface.
+  - Multi-Preset Management: Define custom color configurations and save them as named presets.
+  - Per-Course Theme Selection: Teachers can customize the theme of individual courses, selecting from the global default theme, built-in themes, or custom presets.
+  - Dynamic CSS Variables Injection: Intercepts the loading of H5P content and injects custom CSS variables directly into the iframes.
+  - Density Management: Apply large, medium, or small density classes to adapt H5P content dimensions.
+labels:
+  - fully-free
+category: local
+screenshots:
+  - path: .camp/screenshots/before-after-sunset.jpg
+    caption: Before and after applying the Sunset theme
+  - path: .camp/screenshots/before-after-lavander.jpg
+    caption: Before and after applying the Lavender theme
+  - path: .camp/screenshots/before-after-mint.jpg
+    caption: Before and after applying the Mint theme
+links:
+  docs: https://github.com/Matheu46/moodle-local_h5pthemer#readme
+  issues: https://github.com/Matheu46/moodle-local_h5pthemer/issues
