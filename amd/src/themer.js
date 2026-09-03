@@ -23,6 +23,38 @@
  */
 define(['jquery', 'core/ajax'], function($, ajax) {
     const VALID_DENSITY_CLASSES = ['h5p-large', 'h5p-medium', 'h5p-small'];
+    const CSS_VAR_REGEX = /^--h5p-theme-[a-z0-9-]+$/i;
+    const DANGEROUS_CSS_REGEX = /[;{}<>"\x27\\]|(javascript|expression|url|@import|behavior|eval)/i;
+
+    /**
+     * Validates if a string is a safe and valid CSS value for H5P.
+     *
+     * @param {string} val
+     * @returns {boolean}
+     */
+    function isValidCssValue(val) {
+        if (typeof val !== 'string') {
+            return false;
+        }
+        var trimmed = val.trim();
+        if (trimmed === '' || DANGEROUS_CSS_REGEX.test(trimmed)) {
+            return false;
+        }
+        var rgbPattern = '^rgba?\\(\\s*(?:(?:\\d{1,3}(?:\\.\\d+)?%?|\\.\\d+%?)\\s*[, ]\\s*){2}' +
+            '(?:\\d{1,3}(?:\\.\\d+)?%?|\\.\\d+%?)' +
+            '(?:\\s*(?:,\\s*|\\/\\s*)(?:0|1|0?\\.\\d+|\\d{1,3}%))?\\s*\\)$';
+        var hslPattern = '^hsla?\\(\\s*(?:\\d{1,3}(?:\\.\\d+)?(?:deg|rad|turn)?|\\.\\d+(?:deg|rad|turn)?)\\s*[, ]\\s*' +
+            '\\d{1,3}(?:\\.\\d+)?%\\s*[, ]\\s*\\d{1,3}(?:\\.\\d+)?%' +
+            '(?:\\s*(?:,\\s*|\\/\\s*)(?:0|1|0?\\.\\d+|\\d{1,3}%))?\\s*\\)$';
+
+        return /^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(trimmed) ||
+               /^-?\d+(?:\.\d+)?(?:px|rem|em|%|deg|turn|rad)?$/i.test(trimmed) ||
+               (new RegExp(rgbPattern, 'i')).test(trimmed) ||
+               (new RegExp(hslPattern, 'i')).test(trimmed) ||
+               /^var\(\s*--h5p-theme-[a-z0-9-]+\s*\)$/i.test(trimmed) ||
+               /^color-mix\(\s*in\s+[a-z0-9-]+\s*,\s*[^,;{}]+\s*,\s*[^,;{}]+\s*\)$/i.test(trimmed) ||
+               /^[a-z]{3,25}$/i.test(trimmed);
+    }
 
     return {
         init: function(courseId) {
@@ -48,12 +80,18 @@ define(['jquery', 'core/ajax'], function($, ajax) {
                     }
 
                     var css = ':root {\n';
+                    var count = 0;
                     Object.entries(colors).forEach(function([key, value]) {
-                        if (key.startsWith('--h5p-theme-') && typeof value === 'string') {
-                            css += '  ' + key + ': ' + value + ' !important;\n';
+                        if (CSS_VAR_REGEX.test(key) && isValidCssValue(value)) {
+                            css += '  ' + key + ': ' + value.trim() + ' !important;\n';
+                            count++;
                         }
                     });
                     css += '}\n';
+
+                    if (count === 0) {
+                        return;
+                    }
 
                     styleEl = doc.createElement('style');
                     styleEl.id = styleId;

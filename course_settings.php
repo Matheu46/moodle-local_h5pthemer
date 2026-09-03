@@ -23,7 +23,6 @@
  */
 
 require_once('../../config.php');
-require_once('classes/form/course_settings_form.php');
 
 $id = required_param('id', PARAM_INT);
 
@@ -45,7 +44,8 @@ $mform = new \local_h5pthemer\form\course_settings_form(null, ['courseid' => $id
 if ($mform->is_cancelled()) {
     redirect(new moodle_url('/course/view.php', ['id' => $id]));
 } else if ($fromform = $mform->get_data()) {
-    $configvalue = $fromform->local_h5pthemer_course_config ?? '';
+    $rawconfig = $fromform->local_h5pthemer_course_config ?? '';
+    $configvalue = !empty($rawconfig) ? \local_h5pthemer\util::clean_theme_config($rawconfig) : '';
     set_config("course_{$id}_config", $configvalue, 'local_h5pthemer');
     \core\notification::success(get_string('changessaved'));
     redirect(new moodle_url('/local/h5pthemer/course_settings.php', ['id' => $id]));

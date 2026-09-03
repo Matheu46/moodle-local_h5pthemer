@@ -53,12 +53,31 @@ class course_settings_form extends \moodleform {
         $mform->addElement(
             'textarea',
             'local_h5pthemer_presets_json_readonly',
-            'Presets',
+            get_string('presets_json', 'local_h5pthemer'),
             ['rows' => 5, 'id' => 'id_local_h5pthemer_presets_json_readonly']
         );
         $mform->setType('local_h5pthemer_presets_json_readonly', PARAM_RAW);
         $mform->setDefault('local_h5pthemer_presets_json_readonly', $globalpresets);
 
         $this->add_action_buttons(true, get_string('savechanges', 'admin'));
+    }
+
+    /**
+     * Server side form validation.
+     *
+     * @param array $data Form submitted data.
+     * @param array $files Form submitted files.
+     * @return array Errors array indexed by element name.
+     */
+    public function validation($data, $files): array {
+        $errors = parent::validation($data, $files);
+
+        if (!empty($data['local_h5pthemer_course_config'])) {
+            if (!\local_h5pthemer\util::validate_theme_json($data['local_h5pthemer_course_config'])) {
+                $errors['local_h5pthemer_course_config'] = get_string('invalid_theme_config', 'local_h5pthemer');
+            }
+        }
+
+        return $errors;
     }
 }
