@@ -26,6 +26,15 @@ define(['jquery', 'core/ajax'], function($, ajax) {
     const CSS_VAR_REGEX = /^--h5p-theme-[a-z0-9-]+$/i;
     const DANGEROUS_CSS_REGEX = /[;{}<>"\x27\\]|(javascript|expression|url|@import|behavior|eval)/i;
 
+    const RGB_PATTERN = '^rgba?\\(\\s*(?:(?:\\d{1,3}(?:\\.\\d+)?%?|\\.\\d+%?)\\s*[, ]\\s*){2}' +
+        '(?:\\d{1,3}(?:\\.\\d+)?%?|\\.\\d+%?)' +
+        '(?:\\s*(?:,\\s*|\\/\\s*)(?:0|1|0?\\.\\d+|\\d{1,3}%))?\\s*\\)$';
+    const HSL_PATTERN = '^hsla?\\(\\s*(?:\\d{1,3}(?:\\.\\d+)?(?:deg|rad|turn)?|\\.\\d+(?:deg|rad|turn)?)\\s*[, ]\\s*' +
+        '\\d{1,3}(?:\\.\\d+)?%\\s*[, ]\\s*\\d{1,3}(?:\\.\\d+)?%' +
+        '(?:\\s*(?:,\\s*|\\/\\s*)(?:0|1|0?\\.\\d+|\\d{1,3}%))?\\s*\\)$';
+    const RGB_REGEX = new RegExp(RGB_PATTERN, 'i');
+    const HSL_REGEX = new RegExp(HSL_PATTERN, 'i');
+
     /**
      * Validates if a string is a safe and valid CSS value for H5P.
      *
@@ -40,26 +49,20 @@ define(['jquery', 'core/ajax'], function($, ajax) {
         if (trimmed === '' || DANGEROUS_CSS_REGEX.test(trimmed)) {
             return false;
         }
-        var rgbPattern = '^rgba?\\(\\s*(?:(?:\\d{1,3}(?:\\.\\d+)?%?|\\.\\d+%?)\\s*[, ]\\s*){2}' +
-            '(?:\\d{1,3}(?:\\.\\d+)?%?|\\.\\d+%?)' +
-            '(?:\\s*(?:,\\s*|\\/\\s*)(?:0|1|0?\\.\\d+|\\d{1,3}%))?\\s*\\)$';
-        var hslPattern = '^hsla?\\(\\s*(?:\\d{1,3}(?:\\.\\d+)?(?:deg|rad|turn)?|\\.\\d+(?:deg|rad|turn)?)\\s*[, ]\\s*' +
-            '\\d{1,3}(?:\\.\\d+)?%\\s*[, ]\\s*\\d{1,3}(?:\\.\\d+)?%' +
-            '(?:\\s*(?:,\\s*|\\/\\s*)(?:0|1|0?\\.\\d+|\\d{1,3}%))?\\s*\\)$';
 
         return /^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(trimmed) ||
                /^-?\d+(?:\.\d+)?(?:px|rem|em|%|deg|turn|rad)?$/i.test(trimmed) ||
-               (new RegExp(rgbPattern, 'i')).test(trimmed) ||
-               (new RegExp(hslPattern, 'i')).test(trimmed) ||
+               RGB_REGEX.test(trimmed) ||
+               HSL_REGEX.test(trimmed) ||
                /^var\(\s*--h5p-theme-[a-z0-9-]+\s*\)$/i.test(trimmed) ||
                /^color-mix\(\s*in\s+[a-z0-9-]+\s*,\s*[^,;{}]+\s*,\s*[^,;{}]+\s*\)$/i.test(trimmed) ||
                /^[a-z]{3,25}$/i.test(trimmed);
     }
 
     return {
-        init: function(courseId) {
+        init: function(courseId, initialConfig) {
             $(document).ready(function() {
-                var config = null;
+                var config = typeof initialConfig === 'object' && initialConfig !== null ? initialConfig : null;
                 var fetchingPromise = null;
 
                 /**
@@ -155,7 +158,11 @@ define(['jquery', 'core/ajax'], function($, ajax) {
 
                         var h5pContent = doc.querySelector('.h5p-content');
                         if (!h5pContent) {
-                            return false; // The h5p-content is not created yet.
+                            // Stop polling this outer wrapper iframe if inner iframes were found.
+                            if (innerIframes.length > 0) {
+                                return true;
+                            }
+                            return false; // The h5p-content is not created yet and no inner iframes found.
                         }
 
                         // Check if density is already applied correctly
@@ -175,10 +182,6 @@ define(['jquery', 'core/ajax'], function($, ajax) {
 
                         h5pContent.h5pThemerApplied = true;
 
-                        // If this iframe has inner nested iframes, we shouldn't consider
-                        // it completely "done" until those inner iframes are also processed.
-                        // But we return true to stop polling the *outer* iframe, since the
-                        // inner ones have their own polling interval now.
                         return true;
 
                     } catch (e) {
@@ -254,17 +257,38 @@ define(['jquery', 'core/ajax'], function($, ajax) {
 
                 processAllIframes();
 
-                // Watch for dynamically added iframes (like in modals or ajax navigation)
+                // Watch for dynamically added iframes using optimized native DOM traversal
                 var observer = new MutationObserver(function(mutations) {
-                    mutations.forEach(function(mutation) {
-                        if (mutation.addedNodes) {
-                            $(mutation.addedNodes).find('iframe.h5p-iframe, iframe.h5p-player').each(function() {
-                                processAllIframes();
-                            });
+                    var hasNewIframe = false;
+                    for (var i = 0; i < mutations.length; i++) {
+                        var addedNodes = mutations[i].addedNodes;
+                        for (var j = 0; j < addedNodes.length; j++) {
+                            var node = addedNodes[j];
+                            if (node.nodeType === 1) { // Element node
+                                var isIframe = node.tagName === 'IFRAME';
+                                var hasClass = node.classList.contains('h5p-iframe') || node.classList.contains('h5p-player');
+                                if (isIframe && hasClass) {
+                                    hasNewIframe = true;
+                                    break;
+                                }
+                                if (node.querySelectorAll) {
+                                    var innerIframes = node.querySelectorAll('iframe.h5p-iframe, iframe.h5p-player');
+                                    if (innerIframes.length > 0) {
+                                        hasNewIframe = true;
+                                        break;
+                                    }
+                                }
+                            }
                         }
-                    });
-                });
+                        if (hasNewIframe) {
+                            break;
+                        }
+                    }
 
+                    if (hasNewIframe) {
+                        processAllIframes();
+                    }
+                });
                 observer.observe(document.body, {childList: true, subtree: true});
             });
         }
