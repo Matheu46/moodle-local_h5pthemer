@@ -62,7 +62,7 @@ class get_config extends external_api {
         }
 
         self::validate_context($context);
-        
+
         // If a specific course is requested, ensure the user has permission to view it.
         if ($context->contextlevel == CONTEXT_COURSE) {
             require_capability('moodle/course:view', $context);
