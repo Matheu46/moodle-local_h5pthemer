@@ -264,20 +264,18 @@ define(['jquery', 'core/ajax'], function($, ajax) {
                         var addedNodes = mutations[i].addedNodes;
                         for (var j = 0; j < addedNodes.length; j++) {
                             var node = addedNodes[j];
-                            if (node.nodeType === 1) { // Element node
-                                var isIframe = node.tagName === 'IFRAME';
-                                var hasClass = node.classList.contains('h5p-iframe') || node.classList.contains('h5p-player');
-                                if (isIframe && hasClass) {
-                                    hasNewIframe = true;
-                                    break;
-                                }
-                                if (node.querySelectorAll) {
-                                    var innerIframes = node.querySelectorAll('iframe.h5p-iframe, iframe.h5p-player');
-                                    if (innerIframes.length > 0) {
-                                        hasNewIframe = true;
-                                        break;
-                                    }
-                                }
+                            if (node.nodeType !== 1) {
+                                continue;
+                            }
+                            var isIframe = node.tagName === 'IFRAME';
+                            var hasClass = node.classList.contains('h5p-iframe') || node.classList.contains('h5p-player');
+                            if (isIframe && hasClass) {
+                                hasNewIframe = true;
+                                break;
+                            }
+                            if (node.querySelectorAll && node.querySelectorAll('iframe.h5p-iframe, iframe.h5p-player').length > 0) {
+                                hasNewIframe = true;
+                                break;
                             }
                         }
                         if (hasNewIframe) {
