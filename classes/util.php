@@ -346,4 +346,61 @@ class util {
 
         return json_encode($cleanpresets, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     }
+
+    /**
+     * Determines whether the themer AMD module should be loaded on the given page.
+     *
+     * Prevents unnecessary JS execution and MutationObservers on administrative,
+     * authentication, and maintenance pages where H5P content is never present.
+     *
+     * @param \moodle_page $page The current page object.
+     * @return bool True if the themer module should be loaded, false otherwise.
+     */
+    public static function should_load_themer(\moodle_page $page): bool {
+        // Do not load in CLI, AJAX, or WebService contexts (except during PHPUnit tests).
+        if (defined('CLI_SCRIPT') && CLI_SCRIPT && (!defined('PHPUNIT_TEST') || !PHPUNIT_TEST)) {
+            return false;
+        }
+        if (defined('AJAX_SCRIPT') && AJAX_SCRIPT) {
+            return false;
+        }
+        if (defined('WS_SERVER') && WS_SERVER) {
+            return false;
+        }
+
+        // Check page layout. Layouts that never contain H5P content are excluded.
+        $excludedlayouts = [
+            'admin',
+            'login',
+            'maintenance',
+            'redirect',
+            'print',
+        ];
+        if (in_array($page->pagelayout, $excludedlayouts, true)) {
+            return false;
+        }
+
+        // Check pagetype. Generating/checking the full URL can trigger heavy initializations.
+        $pagetype = $page->pagetype;
+        if (!empty($pagetype)) {
+            $excludedprefixes = [
+                'admin-',
+                'login-',
+                'user-',
+                'grade-',
+                'report-',
+                'calendar-',
+                'message-',
+                'badges-',
+                'local-h5pthemer-',
+            ];
+            foreach ($excludedprefixes as $prefix) {
+                if (strpos($pagetype, $prefix) === 0) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
 }

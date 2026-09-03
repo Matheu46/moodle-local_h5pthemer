@@ -24,12 +24,17 @@
 
 /**
  * Extend navigation to inject our JS on every page.
+ * Extend navigation to inject our JS on pages where H5P content may be present.
  * This handles injecting the theme into both core_h5p and mod_hvp iframes.
  *
  * @param navigation_node $navigation
  */
 function local_h5pthemer_extend_navigation(navigation_node $navigation) {
     global $PAGE, $COURSE;
+
+    if (!\local_h5pthemer\util::should_load_themer($PAGE)) {
+        return;
+    }
 
     $courseid = (!empty($COURSE->id)) ? $COURSE->id : SITEID;
 

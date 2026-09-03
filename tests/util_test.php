@@ -239,4 +239,51 @@ final class util_test extends advanced_testcase {
         $this->assertEquals('lavender', $decoded['theme']);
         $this->assertEquals($colormix, $decoded['colors']['--h5p-theme-contrast-cta-light']);
     }
+
+    /**
+     * Test should_load_themer returns true for content pages and false for admin/auth/excluded pages.
+     */
+    public function test_should_load_themer(): void {
+        // Course page: should load.
+        $page = new \moodle_page();
+        $page->set_url(new \moodle_url('/course/view.php', ['id' => 2]));
+        $page->set_pagetype('course-view');
+        $page->set_pagelayout('course');
+        $this->assertTrue(util::should_load_themer($page));
+
+        // H5P activity: should load.
+        $page = new \moodle_page();
+        $page->set_url(new \moodle_url('/mod/h5pactivity/view.php', ['id' => 5]));
+        $page->set_pagetype('mod-h5pactivity-view');
+        $page->set_pagelayout('incourse');
+        $this->assertTrue(util::should_load_themer($page));
+
+        // Embedded H5P: should load.
+        $page = new \moodle_page();
+        $page->set_url(new \moodle_url('/h5p/embed.php', ['url' => 'test']));
+        $page->set_pagetype('h5p-embed');
+        $page->set_pagelayout('embedded');
+        $this->assertTrue(util::should_load_themer($page));
+
+        // Admin page layout: should NOT load.
+        $page = new \moodle_page();
+        $page->set_url(new \moodle_url('/admin/settings.php'));
+        $page->set_pagetype('admin-settings');
+        $page->set_pagelayout('admin');
+        $this->assertFalse(util::should_load_themer($page));
+
+        // Login page: should NOT load.
+        $page = new \moodle_page();
+        $page->set_url(new \moodle_url('/login/index.php'));
+        $page->set_pagetype('login-index');
+        $page->set_pagelayout('login');
+        $this->assertFalse(util::should_load_themer($page));
+
+        // Course settings of our plugin: should NOT load.
+        $page = new \moodle_page();
+        $page->set_url(new \moodle_url('/local/h5pthemer/course_settings.php', ['id' => 2]));
+        $page->set_pagetype('local-h5pthemer-course_settings');
+        $page->set_pagelayout('course');
+        $this->assertFalse(util::should_load_themer($page));
+    }
 }
