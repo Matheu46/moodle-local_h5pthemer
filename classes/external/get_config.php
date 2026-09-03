@@ -50,8 +50,23 @@ class get_config extends external_api {
         $params = self::validate_parameters(self::execute_parameters(), ['courseid' => $courseid]);
         $courseid = $params['courseid'];
 
-        $context = \context_system::instance();
+        if ($courseid && $courseid != $SITE->id) {
+            $context = \context_course::instance($courseid, IGNORE_MISSING);
+            if (!$context) {
+                // If course does not exist fallback to system context.
+                $context = \context_system::instance();
+                $courseid = 0;
+            }
+        } else {
+            $context = \context_system::instance();
+        }
+
         self::validate_context($context);
+        
+        // If a specific course is requested, ensure the user has permission to view it.
+        if ($context->contextlevel == CONTEXT_COURSE) {
+            require_capability('moodle/course:view', $context);
+        }
 
         $jsonconfig = get_config('local_h5pthemer', 'css_variables');
         $config = [];
