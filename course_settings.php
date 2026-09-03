@@ -46,12 +46,31 @@ if ($mform->is_cancelled()) {
 } else if ($fromform = $mform->get_data()) {
     $rawconfig = $fromform->local_h5pthemer_course_config ?? '';
     $configvalue = !empty($rawconfig) ? \local_h5pthemer\util::clean_theme_config($rawconfig) : '';
-    set_config("course_{$id}_config", $configvalue, 'local_h5pthemer');
+
+    $existing = $DB->get_record('local_h5pthemer_course', ['courseid' => $id]);
+    if ($existing) {
+        $existing->config = $configvalue;
+        $existing->timemodified = time();
+        $DB->update_record('local_h5pthemer_course', $existing);
+    } else {
+        $newrecord = new stdClass();
+        $newrecord->courseid = $id;
+        $newrecord->config = $configvalue;
+        $newrecord->timecreated = time();
+        $newrecord->timemodified = time();
+        $DB->insert_record('local_h5pthemer_course', $newrecord);
+    }
+
     \core\notification::success(get_string('changessaved'));
     redirect(new moodle_url('/local/h5pthemer/course_settings.php', ['id' => $id]));
 }
 
-$currentconfig = get_config('local_h5pthemer', "course_{$id}_config");
+$currentconfig = '';
+$record = $DB->get_record('local_h5pthemer_course', ['courseid' => $id], 'config');
+if ($record) {
+    $currentconfig = $record->config;
+}
+
 $mform->set_data(['local_h5pthemer_course_config' => $currentconfig]);
 
 echo $OUTPUT->header();

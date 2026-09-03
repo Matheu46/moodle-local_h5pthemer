@@ -14,18 +14,24 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
+namespace local_h5pthemer;
+
 /**
- * Plugin version and other meta-data are defined here.
+ * Event observer class for local_h5pthemer.
  *
- * @package     local_h5pthemer
- * @copyright   2026 Matheus Mathias
- * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    local_h5pthemer
+ * @copyright  2026 Matheus Mathias
+ * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die();
-
-$plugin->component = 'local_h5pthemer';
-$plugin->release = '0.4.0';
-$plugin->version = 2026090300;
-$plugin->requires = 2024100710; // Moodle 4.5 or later.
-$plugin->maturity = MATURITY_ALPHA;
+class observer {
+    /**
+     * Observer for course deletion.
+     * Cleans up orphaned records in the local_h5pthemer_course table.
+     *
+     * @param \core\event\course_deleted $event
+     */
+    public static function course_deleted(\core\event\course_deleted $event) {
+        global $DB;
+        $DB->delete_records('local_h5pthemer_course', ['courseid' => $event->objectid]);
+    }
+}

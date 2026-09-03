@@ -46,8 +46,7 @@ class get_config extends external_api {
      * @return string JSON encoded config
      */
     public static function execute($courseid) {
-        global $SITE;
-
+        global $SITE, $DB;
         $params = self::validate_parameters(self::execute_parameters(), ['courseid' => $courseid]);
         $courseid = $params['courseid'];
 
@@ -61,10 +60,10 @@ class get_config extends external_api {
         }
 
         if ($courseid && $courseid != $SITE->id) {
-            $courseconfigjson = get_config('local_h5pthemer', "course_{$courseid}_config");
-            if ($courseconfigjson) {
-                $courseconfig = json_decode($courseconfigjson, true);
-                if (!empty($courseconfig['theme']) && $courseconfig['theme'] !== 'default') {
+            $record = $DB->get_record('local_h5pthemer_course', ['courseid' => $courseid], 'config');
+            if ($record && !empty($record->config)) {
+                $courseconfig = json_decode($record->config, true);
+                if (is_array($courseconfig) && !empty($courseconfig['theme']) && $courseconfig['theme'] !== 'default') {
                     $config = $courseconfig;
                 }
             }

@@ -71,15 +71,21 @@ final class external_test extends advanced_testcase {
      * Test get_config when course config has 'theme' = 'default'.
      */
     public function test_get_config_course_default_theme(): void {
+        global $DB;
         $course = $this->getDataGenerator()->create_course();
 
         // Set global config.
         $globalconfig = json_encode(['theme' => 'dark', 'primary_color' => '#000000']);
         set_config('css_variables', $globalconfig, 'local_h5pthemer');
 
-        // Set course config with default theme.
+        // Set course config with default theme in the table.
         $courseconfig = json_encode(['theme' => 'default', 'primary_color' => '#ffffff']);
-        set_config("course_{$course->id}_config", $courseconfig, 'local_h5pthemer');
+        $DB->insert_record('local_h5pthemer_course', (object)[
+            'courseid' => $course->id,
+            'config' => $courseconfig,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
 
         // Should return global config because theme is 'default'.
         $result = get_config::execute($course->id);
@@ -92,15 +98,21 @@ final class external_test extends advanced_testcase {
      * Test get_config when course config has a specific theme.
      */
     public function test_get_config_course_specific_theme(): void {
+        global $DB;
         $course = $this->getDataGenerator()->create_course();
 
         // Set global config.
         $globalconfig = json_encode(['theme' => 'dark', 'primary_color' => '#000000']);
         set_config('css_variables', $globalconfig, 'local_h5pthemer');
 
-        // Set course config with a specific theme.
+        // Set course config with a specific theme in the new table.
         $courseconfig = json_encode(['theme' => 'light', 'primary_color' => '#ffffff']);
-        set_config("course_{$course->id}_config", $courseconfig, 'local_h5pthemer');
+        $DB->insert_record('local_h5pthemer_course', (object)[
+            'courseid' => $course->id,
+            'config' => $courseconfig,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
 
         // Should return the course specific config.
         $result = get_config::execute($course->id);
