@@ -29,4 +29,8 @@ $observers = [
         'eventname'   => '\core\event\course_deleted',
         'callback'    => 'local_h5pthemer\observer::course_deleted',
     ],
+    [
+        'eventname'   => '\core\event\course_category_deleted',
+        'callback'    => 'local_h5pthemer\observer::course_category_deleted',
+    ],
 ];

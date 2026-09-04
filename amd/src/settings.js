@@ -666,6 +666,9 @@ define(['jquery', 'core/config', 'core/str', 'core/notification'], function($, c
                 if (!textarea.length) {
                     textarea = $('#id_local_h5pthemer_course_config'); // For course level settings
                 }
+                if (!textarea.length) {
+                    textarea = $('#id_local_h5pthemer_category_config'); // For category level settings
+                }
 
                 var presetsTextarea = $('#id_s_local_h5pthemer_presets_json');
                 var presetsReadonly = $('#id_local_h5pthemer_presets_json_readonly');

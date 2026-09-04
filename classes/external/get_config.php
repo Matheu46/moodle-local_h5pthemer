@@ -79,11 +79,46 @@ class get_config extends external_api {
             if ($record && !empty($record->config)) {
                 $courseconfig = json_decode($record->config, true);
                 if (is_array($courseconfig) && !empty($courseconfig['theme']) && $courseconfig['theme'] !== 'default') {
-                    $config = $courseconfig;
+                    // Course specific config wins.
+                    return json_encode($courseconfig);
+                }
+            }
+
+            // Fallback to category inheritance.
+            $sql = "SELECT cc.path
+                      FROM {course} c
+                      JOIN {course_categories} cc ON cc.id = c.category
+                     WHERE c.id = :courseid";
+            $path = $DB->get_field_sql($sql, ['courseid' => $courseid]);
+
+            if ($path) {
+                $categoryids = explode('/', trim($path, '/'));
+                // Reverse to start from the most specific (closest to course) to the root.
+                $categoryids = array_reverse($categoryids);
+
+                if (!empty($categoryids)) {
+                    [$insql, $inparams] = $DB->get_in_or_equal($categoryids);
+                    $catconfigs = $DB->get_records_select(
+                        'local_h5pthemer_category',
+                        "categoryid $insql",
+                        $inparams,
+                        '',
+                        'categoryid, config'
+                    );
+
+                    foreach ($categoryids as $catid) {
+                        if (isset($catconfigs[$catid]) && !empty($catconfigs[$catid]->config)) {
+                            $catconfig = json_decode($catconfigs[$catid]->config, true);
+                            if (is_array($catconfig) && !empty($catconfig['theme']) && $catconfig['theme'] !== 'default') {
+                                return json_encode($catconfig);
+                            }
+                        }
+                    }
                 }
             }
         }
 
+        // Global fallback.
         return json_encode($config);
     }
 

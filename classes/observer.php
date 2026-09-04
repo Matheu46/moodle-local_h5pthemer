@@ -34,4 +34,15 @@ class observer {
         global $DB;
         $DB->delete_records('local_h5pthemer_course', ['courseid' => $event->objectid]);
     }
+
+    /**
+     * Observer for category deletion.
+     * Cleans up orphaned records in the local_h5pthemer_category table.
+     *
+     * @param \core\event\course_category_deleted $event
+     */
+    public static function course_category_deleted(\core\event\course_category_deleted $event) {
+        global $DB;
+        $DB->delete_records('local_h5pthemer_category', ['categoryid' => $event->objectid]);
+    }
 }

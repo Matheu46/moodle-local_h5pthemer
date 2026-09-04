@@ -85,5 +85,29 @@ function xmldb_local_h5pthemer_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026090300, 'local', 'h5pthemer');
     }
 
+    if ($oldversion < 2026090301) {
+        // Define table local_h5pthemer_category to be created.
+        $table = new xmldb_table('local_h5pthemer_category');
+
+        // Adding fields to table local_h5pthemer_category.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('categoryid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('config', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table local_h5pthemer_category.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('categoryid_fk', XMLDB_KEY_FOREIGN_UNIQUE, ['categoryid'], 'course_categories', ['id']);
+
+        // Conditionally launch create table for local_h5pthemer_category.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // H5pthemer savepoint reached.
+        upgrade_plugin_savepoint(true, 2026090301, 'local', 'h5pthemer');
+    }
+
     return true;
 }

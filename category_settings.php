@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Course settings page for the H5P Themer plugin.
+ * Category settings page for the H5P Themer plugin.
  *
  * @package     local_h5pthemer
  * @copyright   2026 Matheus Mathias
@@ -26,52 +26,53 @@ require_once('../../config.php');
 
 $id = required_param('id', PARAM_INT);
 
-$course = $DB->get_record('course', ['id' => $id], '*', MUST_EXIST);
-$context = context_course::instance($course->id);
+$category = $DB->get_record('course_categories', ['id' => $id], '*', MUST_EXIST);
+$context = context_coursecat::instance($category->id);
 
-require_login($course);
-require_capability('moodle/course:update', $context);
+require_login();
+require_capability('moodle/category:manage', $context);
 
-$PAGE->set_url('/local/h5pthemer/course_settings.php', ['id' => $id]);
+$PAGE->set_url('/local/h5pthemer/category_settings.php', ['id' => $id]);
 $PAGE->set_context($context);
-$PAGE->set_title(get_string('pluginname', 'local_h5pthemer'));
-$PAGE->set_heading($course->fullname);
+$PAGE->set_title(get_string('pluginname', 'local_h5pthemer')); // Will fallback to component if not defined, but good practice.
+$PAGE->set_heading($category->name);
+$PAGE->set_pagelayout('admin');
 
 $PAGE->requires->js_call_amd('local_h5pthemer/settings', 'init');
 
-$mform = new \local_h5pthemer\form\course_settings_form(null, ['courseid' => $id]);
+$mform = new \local_h5pthemer\form\category_settings_form(null, ['categoryid' => $id]);
 
 if ($mform->is_cancelled()) {
-    redirect(new moodle_url('/course/view.php', ['id' => $id]));
+    redirect(new moodle_url('/course/management.php', ['categoryid' => $id]));
 } else if ($fromform = $mform->get_data()) {
-    $rawconfig = $fromform->local_h5pthemer_course_config ?? '';
+    $rawconfig = $fromform->local_h5pthemer_category_config ?? '';
     $configvalue = !empty($rawconfig) ? \local_h5pthemer\util::clean_theme_config($rawconfig) : '';
 
-    $existing = $DB->get_record('local_h5pthemer_course', ['courseid' => $id]);
+    $existing = $DB->get_record('local_h5pthemer_category', ['categoryid' => $id]);
     if ($existing) {
         $existing->config = $configvalue;
         $existing->timemodified = time();
-        $DB->update_record('local_h5pthemer_course', $existing);
+        $DB->update_record('local_h5pthemer_category', $existing);
     } else {
         $newrecord = new stdClass();
-        $newrecord->courseid = $id;
+        $newrecord->categoryid = $id;
         $newrecord->config = $configvalue;
         $newrecord->timecreated = time();
         $newrecord->timemodified = time();
-        $DB->insert_record('local_h5pthemer_course', $newrecord);
+        $DB->insert_record('local_h5pthemer_category', $newrecord);
     }
 
     \core\notification::success(get_string('changessaved'));
-    redirect(new moodle_url('/local/h5pthemer/course_settings.php', ['id' => $id]));
+    redirect(new moodle_url('/local/h5pthemer/category_settings.php', ['id' => $id]));
 }
 
 $currentconfig = '';
-$record = $DB->get_record('local_h5pthemer_course', ['courseid' => $id], 'config');
+$record = $DB->get_record('local_h5pthemer_category', ['categoryid' => $id], 'config');
 if ($record) {
     $currentconfig = $record->config;
 }
 
-$mform->set_data(['local_h5pthemer_course_config' => $currentconfig]);
+$mform->set_data(['local_h5pthemer_category_config' => $currentconfig]);
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('pluginname', 'local_h5pthemer'));

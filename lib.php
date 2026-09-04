@@ -53,11 +53,31 @@ function local_h5pthemer_extend_navigation_course(navigation_node $navigation, $
     if (has_capability('moodle/course:update', $context)) {
         $url = new moodle_url('/local/h5pthemer/course_settings.php', ['id' => $course->id]);
         $node = navigation_node::create(
-            get_string('coursesettings', 'local_h5pthemer'),
+            get_string('pluginname', 'local_h5pthemer'),
             $url,
             navigation_node::TYPE_SETTING,
             null,
             'local_h5pthemer_course_settings'
+        );
+        $navigation->add_node($node);
+    }
+}
+
+/**
+ * Extends category navigation to add a settings link for managers.
+ *
+ * @param navigation_node $navigation
+ * @param context $context
+ */
+function local_h5pthemer_extend_navigation_category_settings(navigation_node $navigation, $context) {
+    if ($context->contextlevel == CONTEXT_COURSECAT && has_capability('moodle/category:manage', $context)) {
+        $url = new moodle_url('/local/h5pthemer/category_settings.php', ['id' => $context->instanceid]);
+        $node = navigation_node::create(
+            get_string('pluginname', 'local_h5pthemer'),
+            $url,
+            navigation_node::TYPE_SETTING,
+            null,
+            'local_h5pthemer_category_settings'
         );
         $navigation->add_node($node);
     }
