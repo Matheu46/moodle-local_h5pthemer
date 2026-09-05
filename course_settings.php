@@ -45,9 +45,35 @@ if ($mform->is_cancelled()) {
     redirect(new moodle_url('/course/view.php', ['id' => $id]));
 } else if ($fromform = $mform->get_data()) {
     $rawconfig = $fromform->local_h5pthemer_course_config ?? '';
-    $configvalue = !empty($rawconfig) ? \local_h5pthemer\util::clean_theme_config($rawconfig) : '';
-
     $existing = $DB->get_record('local_h5pthemer_course', ['courseid' => $id]);
+
+    $configarray = [];
+    if (!empty($rawconfig)) {
+        $cleanconfig = \local_h5pthemer\util::clean_theme_config($rawconfig);
+        $configarray = json_decode($cleanconfig, true) ?: [];
+    }
+
+    if (has_capability('moodle/site:config', \context_system::instance())) {
+        if (isset($fromform->custom_css)) {
+            $configarray['custom_css'] = $fromform->custom_css;
+        }
+    } else {
+        // Preserve existing custom css if user is not an admin
+        if ($existing && !empty($existing->config)) {
+            $oldconfig = json_decode($existing->config, true);
+            if (isset($oldconfig['custom_css'])) {
+                $configarray['custom_css'] = $oldconfig['custom_css'];
+            }
+        }
+    }
+
+    // Clean up empty arrays to save space
+    if (empty($configarray)) {
+        $configvalue = '';
+    } else {
+        $configvalue = json_encode($configarray);
+    }
+
     if ($existing) {
         $existing->config = $configvalue;
         $existing->timemodified = time();
@@ -66,12 +92,22 @@ if ($mform->is_cancelled()) {
 }
 
 $currentconfig = '';
+$customcss = '';
 $record = $DB->get_record('local_h5pthemer_course', ['courseid' => $id], 'config');
-if ($record) {
+if ($record && !empty($record->config)) {
     $currentconfig = $record->config;
+    $parsed = json_decode($record->config, true);
+    if (is_array($parsed) && isset($parsed['custom_css'])) {
+        $customcss = $parsed['custom_css'];
+        unset($parsed['custom_css']);
+        $currentconfig = empty($parsed) ? '' : json_encode($parsed);
+    }
 }
 
-$mform->set_data(['local_h5pthemer_course_config' => $currentconfig]);
+$mform->set_data([
+    'local_h5pthemer_course_config' => $currentconfig,
+    'custom_css' => $customcss
+]);
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('pluginname', 'local_h5pthemer'));

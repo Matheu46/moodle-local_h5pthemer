@@ -68,23 +68,24 @@ class get_config extends external_api {
             require_capability('moodle/course:view', $context);
         }
 
+        $finalconfig = [];
+        $accumulatedcss = '';
+
+        // 1. Global config
         $jsonconfig = get_config('local_h5pthemer', 'css_variables');
-        $config = [];
         if ($jsonconfig) {
-            $config = json_decode($jsonconfig, true);
+            $parsed = json_decode($jsonconfig, true);
+            if (is_array($parsed)) {
+                $finalconfig = $parsed;
+            }
+        }
+        $globalcss = get_config('local_h5pthemer', 'custom_css');
+        if (!empty($globalcss)) {
+            $accumulatedcss .= $globalcss . "\n";
         }
 
         if ($courseid && $courseid != $SITE->id) {
-            $record = $DB->get_record('local_h5pthemer_course', ['courseid' => $courseid], 'config');
-            if ($record && !empty($record->config)) {
-                $courseconfig = json_decode($record->config, true);
-                if (is_array($courseconfig) && !empty($courseconfig['theme']) && $courseconfig['theme'] !== 'default') {
-                    // Course specific config wins.
-                    return json_encode($courseconfig);
-                }
-            }
-
-            // Fallback to category inheritance.
+            // 2. Categories (Top-Down: from root to closest)
             $sql = "SELECT cc.path
                       FROM {course} c
                       JOIN {course_categories} cc ON cc.id = c.category
@@ -93,8 +94,6 @@ class get_config extends external_api {
 
             if ($path) {
                 $categoryids = explode('/', trim($path, '/'));
-                // Reverse to start from the most specific (closest to course) to the root.
-                $categoryids = array_reverse($categoryids);
 
                 if (!empty($categoryids)) {
                     [$insql, $inparams] = $DB->get_in_or_equal($categoryids);
@@ -109,17 +108,43 @@ class get_config extends external_api {
                     foreach ($categoryids as $catid) {
                         if (isset($catconfigs[$catid]) && !empty($catconfigs[$catid]->config)) {
                             $catconfig = json_decode($catconfigs[$catid]->config, true);
-                            if (is_array($catconfig) && !empty($catconfig['theme']) && $catconfig['theme'] !== 'default') {
-                                return json_encode($catconfig);
+                            if (is_array($catconfig)) {
+                                if (!empty($catconfig['theme']) && $catconfig['theme'] !== 'default') {
+                                    $themeconfig = $catconfig;
+                                    unset($themeconfig['custom_css']);
+                                    $finalconfig = array_merge($finalconfig, $themeconfig);
+                                }
+                                if (!empty($catconfig['custom_css'])) {
+                                    $accumulatedcss .= $catconfig['custom_css'] . "\n";
+                                }
                             }
                         }
                     }
                 }
             }
+
+            // 3. Course config
+            $record = $DB->get_record('local_h5pthemer_course', ['courseid' => $courseid], 'config');
+            if ($record && !empty($record->config)) {
+                $courseconfig = json_decode($record->config, true);
+                if (is_array($courseconfig)) {
+                    if (!empty($courseconfig['theme']) && $courseconfig['theme'] !== 'default') {
+                        $themeconfig = $courseconfig;
+                        unset($themeconfig['custom_css']);
+                        $finalconfig = array_merge($finalconfig, $themeconfig);
+                    }
+                    if (!empty($courseconfig['custom_css'])) {
+                        $accumulatedcss .= $courseconfig['custom_css'] . "\n";
+                    }
+                }
+            }
         }
 
-        // Global fallback.
-        return json_encode($config);
+        if (!empty($accumulatedcss)) {
+            $finalconfig['custom_css'] = trim($accumulatedcss);
+        }
+
+        return json_encode($finalconfig);
     }
 
     /**

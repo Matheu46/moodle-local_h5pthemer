@@ -53,4 +53,12 @@ if ($hassiteconfig) {
         '',
         \local_h5pthemer\admin_setting_config_json::TYPE_PRESETS
     ));
+
+    $settings->add(new admin_setting_configtextarea(
+        'local_h5pthemer/custom_css',
+        get_string('custom_css', 'local_h5pthemer'),
+        get_string('custom_css_desc', 'local_h5pthemer'),
+        '',
+        PARAM_RAW
+    ));
 }

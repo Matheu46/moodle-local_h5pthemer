@@ -143,8 +143,22 @@ define(['jquery', 'core/ajax'], function($, ajax) {
                             return false; // Not fully ready
                         }
 
-                        // 1. Inject Colors
+                        // Inject Colors
                         injectCustomColors(doc, config.colors);
+
+                        // Inject Custom CSS
+                        if (config.custom_css) {
+                            var styleId = 'h5p-themer-custom-css';
+                            var styleEl = doc.getElementById(styleId);
+                            if (!styleEl) {
+                                styleEl = doc.createElement('style');
+                                styleEl.id = styleId;
+                                doc.head.appendChild(styleEl);
+                            }
+                            if (styleEl.innerHTML !== config.custom_css) {
+                                styleEl.innerHTML = config.custom_css;
+                            }
+                        }
 
                         // Look for nested iframes (e.g. core_h5p often nests h5p-iframe inside h5p-player)
                         var innerIframes = doc.querySelectorAll('iframe.h5p-iframe, iframe.h5p-player');
@@ -152,7 +166,7 @@ define(['jquery', 'core/ajax'], function($, ajax) {
                             setupPolling(innerIframes[i]);
                         }
 
-                        // 2. Apply Density
+                        // Apply Density
                         var density = config.density || '';
                         var densityClass = density ? 'h5p-' + density : '';
 

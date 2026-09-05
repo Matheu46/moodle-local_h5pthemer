@@ -26,6 +26,6 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_h5pthemer';
 $plugin->release = '0.4.0';
-$plugin->version = 2026090301;
+$plugin->version = 2026090401;
 $plugin->requires = 2024100710; // Moodle 4.5 or later.
 $plugin->maturity = MATURITY_ALPHA;
