@@ -20,7 +20,13 @@
  * @copyright  2026 Matheus Mathias
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define(['jquery', 'core/config', 'core/str', 'core/notification', 'core/templates'], function($, cfg, str, notification, templates) {
+define([
+    'jquery',
+    'core/config',
+    'core/str',
+    'core/notification',
+    'core/templates'
+], function($, cfg, str, notification, templates) {
     var componentTranslations = null;
     var uiTranslations = {};
 
@@ -590,7 +596,7 @@ define(['jquery', 'core/config', 'core/str', 'core/notification', 'core/template
      */
     function buildLayout(textarea, activePresetsTextarea, isGlobalAdmin) {
         var pickerEl = createPicker(textarea, activePresetsTextarea);
-        
+
         var cssTextarea = $('#id_s_local_h5pthemer_custom_css, #id_custom_css').first();
         var hasCustomCss = cssTextarea.length > 0;
         var isReadonly = hasCustomCss ? cssTextarea.is('[readonly]') : false;
@@ -603,9 +609,9 @@ define(['jquery', 'core/config', 'core/str', 'core/notification', 'core/template
 
         templates.render('local_h5pthemer/settings_layout', context).then(function(html, js) {
             var container = $(html);
-            
+
             container.find('#h5p-themer-picker-container').append(pickerEl);
-            
+
             if (context.isGlobalAdmin) {
                 setupPresetManagement(textarea, activePresetsTextarea, pickerEl, container);
             }
@@ -615,13 +621,13 @@ define(['jquery', 'core/config', 'core/str', 'core/notification', 'core/template
                 cssTextarea.addClass('h5p-themer-code-editor form-control');
                 cssTextarea.attr('spellcheck', 'false');
                 cssTextarea.attr('placeholder', '/* .h5p-content { font-family: sans-serif; } */');
-                
+
                 container.find('#h5p-themer-css-container').append(cssTextarea);
                 if (cssFitem.length) {
                     cssFitem.hide();
                 }
             }
-            
+
             var fitem = textarea.closest('.form-item, .fitem');
             if (fitem.length) {
                 fitem.after(container);
@@ -635,7 +641,7 @@ define(['jquery', 'core/config', 'core/str', 'core/notification', 'core/template
             if (actionButtons.length) {
                 actionButtons.addClass('h5p-themer-actions-bar');
             }
-            
+
             templates.runTemplateJS(js);
             return html;
         }).catch(notification.exception);

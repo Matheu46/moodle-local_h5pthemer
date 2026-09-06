@@ -60,16 +60,16 @@ class category_settings_form extends \moodleform {
         $mform->setDefault('local_h5pthemer_presets_json_readonly', $globalpresets);
 
         $isadmin = has_capability('moodle/site:config', \context_system::instance());
-        $css_attributes = ['rows' => 10, 'class' => 'text-ltr'];
+        $cssattributes = ['rows' => 10, 'class' => 'text-ltr'];
         if (!$isadmin) {
-            $css_attributes['readonly'] = 'readonly';
+            $cssattributes['readonly'] = 'readonly';
         }
 
         $mform->addElement(
             'textarea',
             'custom_css',
             get_string('custom_css', 'local_h5pthemer'),
-            $css_attributes
+            $cssattributes
         );
         $mform->addHelpButton('custom_css', 'custom_css', 'local_h5pthemer');
         $mform->setType('custom_css', PARAM_RAW);

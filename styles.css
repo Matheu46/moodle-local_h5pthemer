@@ -44,18 +44,6 @@
     padding: 1.25rem;
 }
 
-.h5p-themer-picker-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-}
-
-.h5p-themer-picker-wrapper > h5p-theme-picker {
-    width: 100%;
-    max-width: 900px;
-}
-
 .h5p-themer-presets-section {
     width: 100%;
     max-width: 900px;
@@ -75,24 +63,24 @@
     width: 100%;
 }
 
-.h5p-themer-code-editor {
-    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
-    font-size: 13px !important;
-    line-height: 1.5 !important;
-    padding: 12px !important;
-    border-radius: 6px !important;
-    border: 1px solid #ced4da !important;
-    background-color: #fcfcfc !important;
-    color: #212529 !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
+.h5p-themer-settings-container textarea.h5p-themer-code-editor {
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    background-color: #fcfcfc;
+    color: #212529;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-.h5p-themer-code-editor:focus {
-    background-color: #fff !important;
-    border-color: #86b7fe !important;
-    outline: 0 !important;
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+.h5p-themer-settings-container textarea.h5p-themer-code-editor:focus {
+    background-color: #fff;
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
 }
 
 .h5p-themer-preset-swatch {
@@ -105,9 +93,9 @@
     vertical-align: middle;
 }
 
-.h5p-themer-actions-bar {
+div.h5p-themer-actions-bar {
     max-width: 1000px;
-    margin: 2rem auto 0 auto !important;
+    margin: 2rem auto 0 auto;
     border-top: 1px solid #dee2e6;
     padding-top: 1.5rem;
     text-align: center;

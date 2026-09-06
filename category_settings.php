@@ -59,7 +59,7 @@ if ($mform->is_cancelled()) {
             $configarray['custom_css'] = $fromform->custom_css;
         }
     } else {
-        // Preserve existing custom css if user is not an admin
+        // Preserve existing custom css if user is not an admin.
         if ($existing && !empty($existing->config)) {
             $oldconfig = json_decode($existing->config, true);
             if (isset($oldconfig['custom_css'])) {
@@ -68,7 +68,7 @@ if ($mform->is_cancelled()) {
         }
     }
 
-    // Clean up empty arrays to save space
+    // Clean up empty arrays to save space.
     if (empty($configarray)) {
         $configvalue = '';
     } else {
@@ -107,7 +107,7 @@ if ($record && !empty($record->config)) {
 
 $mform->set_data([
     'local_h5pthemer_category_config' => $currentconfig,
-    'custom_css' => $customcss
+    'custom_css' => $customcss,
 ]);
 
 echo $OUTPUT->header();
