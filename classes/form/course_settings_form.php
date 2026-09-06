@@ -59,16 +59,20 @@ class course_settings_form extends \moodleform {
         $mform->setType('local_h5pthemer_presets_json_readonly', PARAM_RAW);
         $mform->setDefault('local_h5pthemer_presets_json_readonly', $globalpresets);
 
-        if (has_capability('moodle/site:config', \context_system::instance())) {
-            $mform->addElement(
-                'textarea',
-                'custom_css',
-                get_string('custom_css', 'local_h5pthemer'),
-                ['rows' => 10, 'class' => 'text-ltr']
-            );
-            $mform->addHelpButton('custom_css', 'custom_css', 'local_h5pthemer');
-            $mform->setType('custom_css', PARAM_RAW);
+        $isadmin = has_capability('moodle/site:config', \context_system::instance());
+        $css_attributes = ['rows' => 10, 'class' => 'text-ltr'];
+        if (!$isadmin) {
+            $css_attributes['readonly'] = 'readonly';
         }
+
+        $mform->addElement(
+            'textarea',
+            'custom_css',
+            get_string('custom_css', 'local_h5pthemer'),
+            $css_attributes
+        );
+        $mform->addHelpButton('custom_css', 'custom_css', 'local_h5pthemer');
+        $mform->setType('custom_css', PARAM_RAW);
 
         $this->add_action_buttons(true, get_string('savechanges', 'admin'));
     }
