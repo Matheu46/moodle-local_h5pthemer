@@ -15,17 +15,22 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Plugin version and other meta-data are defined here.
+ * Event observers for local_h5pthemer.
  *
- * @package     local_h5pthemer
- * @copyright   2026 Matheus Mathias
- * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    local_h5pthemer
+ * @copyright  2026 Matheus Mathias
+ * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'local_h5pthemer';
-$plugin->release = '0.5.0';
-$plugin->version = 2026090602;
-$plugin->requires = 2024100710; // Moodle 4.5 or later.
-$plugin->maturity = MATURITY_ALPHA;
+$observers = [
+    [
+        'eventname'   => '\core\event\course_deleted',
+        'callback'    => 'local_h5pthemer\observer::course_deleted',
+    ],
+    [
+        'eventname'   => '\core\event\course_category_deleted',
+        'callback'    => 'local_h5pthemer\observer::course_category_deleted',
+    ],
+];

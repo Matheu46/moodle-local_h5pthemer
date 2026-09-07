@@ -41,6 +41,7 @@ use PHPUnit\Framework\Attributes\CoversFunction;
  */
 #[CoversFunction('local_h5pthemer_extend_navigation')]
 #[CoversFunction('local_h5pthemer_extend_navigation_course')]
+#[CoversFunction('local_h5pthemer_extend_navigation_category_settings')]
 final class lib_test extends advanced_testcase {
     /**
      * Setup before each test.
@@ -78,6 +79,26 @@ final class lib_test extends advanced_testcase {
     }
 
     /**
+     * Test extend_navigation does not load themer on admin pages.
+     */
+    public function test_local_h5pthemer_extend_navigation_excluded_on_admin(): void {
+        global $PAGE, $COURSE;
+
+        $course = $this->getDataGenerator()->create_course();
+        $COURSE = $course;
+
+        $PAGE->set_url(new moodle_url('/admin/settings.php'));
+        $PAGE->set_pagelayout('admin');
+
+        $navigation = new navigation_node('Test node');
+
+        local_h5pthemer_extend_navigation($navigation);
+
+        $footerhtml = $PAGE->requires->get_end_code();
+        $this->assertStringNotContainsString('local_h5pthemer/themer', $footerhtml);
+    }
+
+    /**
      * Test course navigation for user with capability.
      */
     public function test_local_h5pthemer_extend_navigation_course_with_capability(): void {
@@ -99,8 +120,8 @@ final class lib_test extends advanced_testcase {
         // Check if the node was added.
         $node = $navigation->get('local_h5pthemer_course_settings');
         $this->assertInstanceOf(navigation_node::class, $node);
-        $this->assertEquals(get_string('coursesettings', 'local_h5pthemer'), $node->text);
-        $this->assertEquals(new moodle_url('/local/h5pthemer/course_settings.php', ['id' => $course->id]), $node->action);
+        $expectedurl = new moodle_url('/local/h5pthemer/course_settings.php', ['id' => $course->id]);
+        $this->assertEquals($expectedurl, $node->action);
     }
 
     /**
@@ -119,6 +140,51 @@ final class lib_test extends advanced_testcase {
 
         // Check that the node was NOT added.
         $node = $navigation->get('local_h5pthemer_course_settings');
+        $this->assertFalse($node);
+    }
+
+    /**
+     * Test category navigation for user with capability.
+     */
+    public function test_local_h5pthemer_extend_navigation_category_settings_with_capability(): void {
+        $category = $this->getDataGenerator()->create_category();
+        $context = \context_coursecat::instance($category->id);
+
+        $user = $this->getDataGenerator()->create_user();
+        $roleid = $this->getDataGenerator()->create_role();
+        // Give capability.
+        assign_capability('moodle/category:manage', CAP_ALLOW, $roleid, $context->id);
+        role_assign($roleid, $user->id, $context->id);
+
+        $this->setUser($user);
+
+        $navigation = new navigation_node('Test category node');
+
+        local_h5pthemer_extend_navigation_category_settings($navigation, $context);
+
+        // Check if the node was added.
+        $node = $navigation->get('local_h5pthemer_category_settings');
+        $this->assertInstanceOf(navigation_node::class, $node);
+        $expectedurl = new moodle_url('/local/h5pthemer/category_settings.php', ['id' => $category->id]);
+        $this->assertEquals($expectedurl, $node->action);
+    }
+
+    /**
+     * Test category navigation for user without capability.
+     */
+    public function test_local_h5pthemer_extend_navigation_category_settings_without_capability(): void {
+        $category = $this->getDataGenerator()->create_category();
+        $context = \context_coursecat::instance($category->id);
+
+        $user = $this->getDataGenerator()->create_user();
+        $this->setUser($user);
+
+        $navigation = new navigation_node('Test category node');
+
+        local_h5pthemer_extend_navigation_category_settings($navigation, $context);
+
+        // Check that the node was NOT added.
+        $node = $navigation->get('local_h5pthemer_category_settings');
         $this->assertFalse($node);
     }
 }

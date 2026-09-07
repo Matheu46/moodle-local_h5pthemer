@@ -2,6 +2,20 @@
 
 All notable changes to the **H5P Themer** (`local_h5pthemer`) plugin will be documented in this file.
 
+## [0.5.0] - 2026-09-06
+
+### Added
+- **Custom CSS Support**: Added `custom_css` field across Global, Category, and Course levels. Custom CSS is accumulated and concatenated (Top-Down) allowing modular styling overrides.
+- **Cascading Configuration**: Configurations on custom css is cascade automatically from Global -> Category -> Course. Themes override higher levels (most specific wins).
+- **Category Level Settings**: Managers can now define specific H5P themes and CSS for entire categories of courses via a new navigation node.
+- **Security for CSS Injection**: Enforced strict security on the `custom_css` field. It is rendered as `readonly` for standard users, only allowing users with `moodle/site:config` to save raw CSS.
+- **Database Architecture**: Implemented `local_h5pthemer_category` and `local_h5pthemer_course` tables to store contextual settings natively, complete with `upgrade.php` routines.
+
+### Changed / Refactored
+- **UI & Layout Modernization**: Overhauled the administration and contextual settings pages using a card-based layout (Bootstrap) powered by Moodle's Mustache templates (`settings_layout.mustache`), removing legacy jQuery DOM generation.
+- **Internationalization (i18n)**: Stripped all hardcoded English strings from JavaScript and migrated them to proper Moodle language strings (`local_h5pthemer.php`).
+- **Comprehensive Testing**: Expanded PHPUnit test coverage (`external_test.php`, `lib_test.php`, `util_test.php`) testing hierarchical cascading, CSS accumulation, and capability-based navigation nodes.
+
 ## [0.4.0] - 2026-08-01
 
 ### Added

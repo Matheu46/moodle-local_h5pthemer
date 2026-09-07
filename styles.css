@@ -1,0 +1,110 @@
+/* This file is part of Moodle - http://moodle.org/
+/*
+/* Moodle is free software: you can redistribute it and/or modify
+/* it under the terms of the GNU General Public License as published by
+/* the Free Software Foundation, either version 3 of the License, or
+/* (at your option) any later version.
+/*
+/* Moodle is distributed in the hope that it will be useful,
+/* but WITHOUT ANY WARRANTY; without even the implied warranty of
+/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+/* GNU General Public License for more details.
+/*
+/* You should have received a copy of the GNU General Public License
+/* along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ *
+ * @package    local_h5pthemer
+ * @copyright  2026 Matheus Mathias
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+.h5p-themer-settings-container {
+    max-width: 1000px;
+    margin: 0 auto 2rem auto;
+}
+
+.h5p-themer-card {
+    border: 1px solid rgba(0, 0, 0, 0.125);
+    border-radius: 0.5rem;
+    background-color: #fff;
+    margin-bottom: 1.75rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.h5p-themer-card .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    padding: 0.85rem 1.25rem;
+    font-weight: 600;
+}
+
+.h5p-themer-card .card-body {
+    padding: 1.25rem;
+}
+
+.h5p-themer-presets-section {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.h5p-themer-presets-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: 720px;
+    margin-bottom: 1rem;
+}
+
+.h5p-themer-presets-wrapper {
+    width: 100%;
+}
+
+.h5p-themer-settings-container textarea.h5p-themer-code-editor {
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    background-color: #fcfcfc;
+    color: #212529;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.h5p-themer-settings-container textarea.h5p-themer-code-editor:focus {
+    background-color: #fff;
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.h5p-themer-preset-swatch {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    margin-right: 3px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    vertical-align: middle;
+}
+
+div.h5p-themer-actions-bar {
+    max-width: 1000px;
+    margin: 2rem auto 0 auto;
+    border-top: 1px solid #dee2e6;
+    padding-top: 1.5rem;
+    text-align: center;
+}
+
+.h5p-themer-actions-bar .form-submit,
+.h5p-themer-actions-bar .felement {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+}

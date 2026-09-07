@@ -37,22 +37,28 @@ if ($hassiteconfig) {
 
     // Provide a textarea that will be enhanced by the JS Theme Picker.
     // The web component will interact with this hidden field.
-    $settings->add(new admin_setting_configtextarea(
+    $settings->add(new \local_h5pthemer\admin_setting_config_json(
         'local_h5pthemer/css_variables',
         get_string('themecolors', 'local_h5pthemer'),
         get_string('themecolors_desc', 'local_h5pthemer'),
         $defaultconfig,
-        PARAM_RAW
+        \local_h5pthemer\admin_setting_config_json::TYPE_THEME,
+        true
     ));
 
-    $settings->add(new admin_setting_configtextarea(
+    $settings->add(new \local_h5pthemer\admin_setting_config_json(
         'local_h5pthemer/presets_json',
         get_string('presets_json', 'local_h5pthemer'),
         get_string('presets_json_desc', 'local_h5pthemer'),
         '',
-        PARAM_RAW
+        \local_h5pthemer\admin_setting_config_json::TYPE_PRESETS
     ));
 
-    // Load AMD module to initialize the web component and handle the textarea.
-    $PAGE->requires->js_call_amd('local_h5pthemer/settings', 'init');
+    $settings->add(new admin_setting_configtextarea(
+        'local_h5pthemer/custom_css',
+        get_string('custom_css', 'local_h5pthemer'),
+        get_string('custom_css_desc', 'local_h5pthemer'),
+        '',
+        PARAM_RAW
+    ));
 }

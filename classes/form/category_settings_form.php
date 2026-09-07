@@ -21,13 +21,13 @@ defined('MOODLE_INTERNAL') || die();
 require_once("$CFG->libdir/formslib.php");
 
 /**
- * Course settings form.
+ * Category settings form.
  *
  * @package     local_h5pthemer
  * @copyright   2026 Matheus Mathias
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class course_settings_form extends \moodleform {
+class category_settings_form extends \moodleform {
     /**
      * Form definition.
      */
@@ -37,17 +37,17 @@ class course_settings_form extends \moodleform {
         // Hidden fields for the custom element to read/write from.
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);
-        if (isset($this->_customdata['courseid'])) {
-            $mform->setDefault('id', $this->_customdata['courseid']);
+        if (isset($this->_customdata['categoryid'])) {
+            $mform->setDefault('id', $this->_customdata['categoryid']);
         }
 
         $mform->addElement(
             'textarea',
-            'local_h5pthemer_course_config',
+            'local_h5pthemer_category_config',
             get_string('themecolors', 'local_h5pthemer'),
-            ['rows' => 5, 'id' => 'id_local_h5pthemer_course_config']
+            ['rows' => 5, 'id' => 'id_local_h5pthemer_category_config']
         );
-        $mform->setType('local_h5pthemer_course_config', PARAM_RAW);
+        $mform->setType('local_h5pthemer_category_config', PARAM_RAW);
 
         $globalpresets = get_config('local_h5pthemer', 'presets_json');
         $mform->addElement(
@@ -87,9 +87,9 @@ class course_settings_form extends \moodleform {
     public function validation($data, $files): array {
         $errors = parent::validation($data, $files);
 
-        if (!empty($data['local_h5pthemer_course_config'])) {
-            if (!\local_h5pthemer\util::validate_theme_json($data['local_h5pthemer_course_config'])) {
-                $errors['local_h5pthemer_course_config'] = get_string('invalid_theme_config', 'local_h5pthemer');
+        if (!empty($data['local_h5pthemer_category_config'])) {
+            if (!\local_h5pthemer\util::validate_theme_json($data['local_h5pthemer_category_config'])) {
+                $errors['local_h5pthemer_category_config'] = get_string('invalid_theme_config', 'local_h5pthemer');
             }
         }
 
