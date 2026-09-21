@@ -14,21 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * Privacy Subsystem implementation for local_h5pthemer.
- *
- * @package     local_h5pthemer
- * @category    privacy
- * @copyright   2026 Matheus Mathias
- * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
 namespace local_h5pthemer\privacy;
 
 /**
  * Privacy Subsystem implementation for local_h5pthemer.
  *
  * @package     local_h5pthemer
+ * @category    privacy
  * @copyright   2026 Matheus Mathias
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */

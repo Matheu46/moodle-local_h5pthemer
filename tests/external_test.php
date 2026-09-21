@@ -217,4 +217,33 @@ final class external_test extends advanced_testcase {
         $this->assertEquals('blue', $decoded['theme']); // Overridden by cat2.
         $this->assertEquals('medium', $decoded['density']); // Inherited from cat1.
     }
+
+    /**
+     * Test that an enrolled student can access the configuration.
+     */
+    public function test_get_config_enrolled_student(): void {
+        $course = $this->getDataGenerator()->create_course();
+        $student = $this->getDataGenerator()->create_and_enrol($course, 'student');
+
+        $this->setUser($student);
+
+        // This should not throw any capability exceptions since validate_context allows enrolled students.
+        $result = get_config::execute($course->id);
+        $result = external_api::clean_returnvalue(get_config::execute_returns(), $result);
+
+        $this->assertIsString($result);
+    }
+
+    /**
+     * Test that an unenrolled student cannot access the configuration for a course.
+     */
+    public function test_get_config_unenrolled_student(): void {
+        $course = $this->getDataGenerator()->create_course();
+        $student = $this->getDataGenerator()->create_user();
+
+        $this->setUser($student);
+
+        $this->expectException(\require_login_exception::class);
+        get_config::execute($course->id);
+    }
 }
