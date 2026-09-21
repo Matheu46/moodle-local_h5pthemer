@@ -319,100 +319,106 @@ define([
             }
             var reader = new FileReader();
             reader.onload = function(evt) {
+                var data = null;
                 try {
-                    var data = JSON.parse(evt.target.result);
-                    if (data && data.id && data.colors && typeof data.colors === 'object') {
-                        var cleanColors = {};
-                        var hasInvalid = false;
-                        for (var varName in data.colors) {
-                            if (Object.prototype.hasOwnProperty.call(data.colors, varName)) {
-                                var val = data.colors[varName];
-                                if (/^--h5p-theme-[a-z0-9-]+$/.test(varName) && isValidCssColor(val)) {
-                                    cleanColors[varName] = val;
-                                } else {
-                                    hasInvalid = true;
-                                }
-                            }
-                        }
-
-                        if (hasInvalid) {
-                            notification.addNotification({
-                                message: 'Invalid or unsafe color values detected in the imported preset.',
-                                type: 'error'
-                            });
-                            fileInput.val('');
-                            return;
-                        }
-
-                        var slug = data.id.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-                        var name = data.name || data.id;
-                        var existingPresetsStr = presetsTextarea.val();
-                        var presetsArr = [];
-                        if (existingPresetsStr && existingPresetsStr.trim() !== '') {
-                            try {
-                                presetsArr = JSON.parse(existingPresetsStr);
-                            } catch (e) {
-                                // Ignore JSON parsing error.
-                            }
-                        }
-
-                        var existingIndex = -1;
-                        for (var i = 0; i < presetsArr.length; i++) {
-                            if (presetsArr[i].id === slug) {
-                                existingIndex = i;
-                                break;
-                            }
-                        }
-
-                        var newPreset = {
-                            id: slug,
-                            name: name,
-                            colors: cleanColors
-                        };
-
-                        if (existingIndex !== -1) {
-                            presetsArr[existingIndex] = newPreset;
-                        } else {
-                            presetsArr.push(newPreset);
-                        }
-
-                        presetsTextarea.val(JSON.stringify(presetsArr, null, 2));
-
-                        var currentConfigStr = textarea.val();
-                        var currentConfig = {};
-                        if (currentConfigStr) {
-                            try {
-                                currentConfig = JSON.parse(currentConfigStr);
-                            } catch (err) {
-                                // Ignore JSON parsing error.
-                            }
-                        }
-                        currentConfig.theme = 'custom';
-                        currentConfig.colors = cleanColors;
-                        textarea.val(JSON.stringify(currentConfig, null, 2));
-
-                        var newPickerEl = createPicker(textarea, presetsTextarea);
-                        $(pickerEl).replaceWith(newPickerEl);
-                        pickerEl = newPickerEl;
-                        bindVisibilityToggle(pickerEl);
-
-                        presetInput.val(name);
-                        presetButton.text(uiTranslations.update_preset);
-                        presetUI.removeClass('d-none').addClass('d-flex');
-
-                        renderList();
-                    } else {
-                        notification.addNotification({
-                            message: uiTranslations.importpreset_error,
-                            type: 'error'
-                        });
-                    }
+                    data = JSON.parse(evt.target.result);
                 } catch (err) {
                     notification.addNotification({
                         message: uiTranslations.importpreset_error,
                         type: 'error'
                     });
+                    fileInput.val('');
+                    return;
                 }
+
+                if (!data || !data.id || !data.colors || typeof data.colors !== 'object') {
+                    notification.addNotification({
+                        message: uiTranslations.importpreset_error,
+                        type: 'error'
+                    });
+                    fileInput.val('');
+                    return;
+                }
+
+                var cleanColors = {};
+                var hasInvalid = false;
+                for (var varName in data.colors) {
+                    if (Object.prototype.hasOwnProperty.call(data.colors, varName)) {
+                        var val = data.colors[varName];
+                        if (/^--h5p-theme-[a-z0-9-]+$/.test(varName) && isValidCssColor(val)) {
+                            cleanColors[varName] = val;
+                        } else {
+                            hasInvalid = true;
+                        }
+                    }
+                }
+
+                if (hasInvalid) {
+                    notification.addNotification({
+                        message: 'Invalid or unsafe color values detected in the imported preset.',
+                        type: 'error'
+                    });
+                    fileInput.val('');
+                    return;
+                }
+
+                var slug = data.id.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                var name = data.name || data.id;
+                var existingPresetsStr = presetsTextarea.val();
+                var presetsArr = [];
+                if (existingPresetsStr && existingPresetsStr.trim() !== '') {
+                    try {
+                        presetsArr = JSON.parse(existingPresetsStr);
+                    } catch (e) {
+                        // Ignore JSON parsing error.
+                    }
+                }
+
+                var existingIndex = -1;
+                for (var i = 0; i < presetsArr.length; i++) {
+                    if (presetsArr[i].id === slug) {
+                        existingIndex = i;
+                        break;
+                    }
+                }
+
+                var newPreset = {
+                    id: slug,
+                    name: name,
+                    colors: cleanColors
+                };
+
+                if (existingIndex !== -1) {
+                    presetsArr[existingIndex] = newPreset;
+                } else {
+                    presetsArr.push(newPreset);
+                }
+
+                presetsTextarea.val(JSON.stringify(presetsArr, null, 2));
+
+                var currentConfigStr = textarea.val();
+                var currentConfig = {};
+                if (currentConfigStr) {
+                    try {
+                        currentConfig = JSON.parse(currentConfigStr);
+                    } catch (err) {
+                        // Ignore JSON parsing error.
+                    }
+                }
+                currentConfig.theme = 'custom';
+                currentConfig.colors = cleanColors;
+                textarea.val(JSON.stringify(currentConfig, null, 2));
+
+                var newPickerEl = createPicker(textarea, presetsTextarea);
+                $(pickerEl).replaceWith(newPickerEl);
+                pickerEl = newPickerEl;
+                bindVisibilityToggle(pickerEl);
+
+                presetInput.val(name);
+                presetButton.text(uiTranslations.update_preset);
+                presetUI.removeClass('d-none').addClass('d-flex');
+
+                renderList();
                 fileInput.val('');
             };
             reader.readAsText(file);
