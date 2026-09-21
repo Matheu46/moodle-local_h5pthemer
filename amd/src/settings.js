@@ -31,6 +31,24 @@ define([
     var uiTranslations = {};
 
     /**
+     * Validates if a string is a safe CSS color/value.
+     * Prevents XSS injections such as breaking out of style attributes.
+     *
+     * @param {string} val
+     * @returns {boolean}
+     */
+    function isValidCssColor(val) {
+        if (typeof val !== 'string') {
+            return false;
+        }
+        var trimmed = val.trim();
+        if (trimmed === '' || /[<>"';{}]/.test(trimmed)) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * Maps the simple array format to the component's expected customPresets format.
      *
      * @param {Array} presetsArr Array of preset objects.
@@ -303,7 +321,29 @@ define([
             reader.onload = function(evt) {
                 try {
                     var data = JSON.parse(evt.target.result);
-                    if (data && data.id && data.colors) {
+                    if (data && data.id && data.colors && typeof data.colors === 'object') {
+                        var cleanColors = {};
+                        var hasInvalid = false;
+                        for (var varName in data.colors) {
+                            if (Object.prototype.hasOwnProperty.call(data.colors, varName)) {
+                                var val = data.colors[varName];
+                                if (/^--h5p-theme-[a-z0-9-]+$/.test(varName) && isValidCssColor(val)) {
+                                    cleanColors[varName] = val;
+                                } else {
+                                    hasInvalid = true;
+                                }
+                            }
+                        }
+
+                        if (hasInvalid) {
+                            notification.addNotification({
+                                message: 'Invalid or unsafe color values detected in the imported preset.',
+                                type: 'error'
+                            });
+                            fileInput.val('');
+                            return;
+                        }
+
                         var slug = data.id.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
                         var name = data.name || data.id;
                         var existingPresetsStr = presetsTextarea.val();
@@ -327,7 +367,7 @@ define([
                         var newPreset = {
                             id: slug,
                             name: name,
-                            colors: data.colors
+                            colors: cleanColors
                         };
 
                         if (existingIndex !== -1) {
@@ -348,7 +388,7 @@ define([
                             }
                         }
                         currentConfig.theme = 'custom';
-                        currentConfig.colors = data.colors;
+                        currentConfig.colors = cleanColors;
                         textarea.val(JSON.stringify(currentConfig, null, 2));
 
                         var newPickerEl = createPicker(textarea, presetsTextarea);
@@ -470,10 +510,13 @@ define([
                 var c3 = colors['--h5p-theme-alternative-base'] || preset.color3 || '#000000';
                 var c4 = colors['--h5p-theme-background'] || preset.color4 || '#ffffff';
 
-                swatchesDiv.append($('<span class="h5p-themer-preset-swatch" style="background-color: ' + c1 + ';"></span>'));
-                swatchesDiv.append($('<span class="h5p-themer-preset-swatch" style="background-color: ' + c2 + ';"></span>'));
-                swatchesDiv.append($('<span class="h5p-themer-preset-swatch" style="background-color: ' + c3 + ';"></span>'));
-                swatchesDiv.append($('<span class="h5p-themer-preset-swatch" style="background-color: ' + c4 + ';"></span>'));
+                [c1, c2, c3, c4].forEach(function(c) {
+                    var swatch = $('<span class="h5p-themer-preset-swatch"></span>');
+                    if (isValidCssColor(c)) {
+                        swatch.css('background-color', c);
+                    }
+                    swatchesDiv.append(swatch);
+                });
 
                 var nameSpan = $('<span class="fw-semibold"></span>').text(preset.name || preset.id);
                 leftDiv.append(swatchesDiv).append(nameSpan);
