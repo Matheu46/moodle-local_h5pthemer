@@ -2,6 +2,13 @@
 
 All notable changes to the **H5P Themer** (`local_h5pthemer`) plugin will be documented in this file.
 
+## [v0.5.1] - 2026-09-21
+
+### Fixed
+- **Course Theming Access**: Removed redundant `moodle/course:view` capability check in `get_config` external API, ensuring enrolled students and teachers can receive themed H5P content on course pages.
+- **Preset Import Hardening (DOM XSS)**: Added color and variable name validation during preset JSON imports in `settings.js`, and switched to safe DOM creation with jQuery `.css()` for rendering color swatches.
+- **Defense-in-Depth for CSS Injection**: Updated `themer.js` to inject custom stylesheets into H5P iframes via `textContent` instead of `innerHTML`.
+
 ## [0.5.0] - 2026-09-06
 
 ### Added
