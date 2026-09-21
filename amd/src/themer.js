@@ -155,8 +155,8 @@ define(['jquery', 'core/ajax'], function($, ajax) {
                                 styleEl.id = styleId;
                                 doc.head.appendChild(styleEl);
                             }
-                            if (styleEl.innerHTML !== config.custom_css) {
-                                styleEl.innerHTML = config.custom_css;
+                            if (styleEl.textContent !== config.custom_css) {
+                                styleEl.textContent = config.custom_css;
                             }
                         }
 
