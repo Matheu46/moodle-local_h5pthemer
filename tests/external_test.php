@@ -246,4 +246,42 @@ final class external_test extends advanced_testcase {
         $this->expectException(\require_login_exception::class);
         get_config::execute($course->id);
     }
+    /**
+     * Test that corrupted JSON in the database does not crash the web service.
+     */
+    public function test_get_config_corrupted_json_resiliency(): void {
+        global $DB;
+        $category = $this->getDataGenerator()->create_category();
+        $course = $this->getDataGenerator()->create_course(['category' => $category->id]);
+
+        // Set global config.
+        $globalconfig = json_encode(['theme' => 'dark', 'density' => 'large']);
+        set_config('css_variables', $globalconfig, 'local_h5pthemer');
+
+        // Set category config with broken JSON.
+        $DB->insert_record('local_h5pthemer_category', (object)[
+            'categoryid' => $category->id,
+            'config' => '{broken_json_here:',
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        // Set course config with another broken JSON.
+        $DB->insert_record('local_h5pthemer_course', (object)[
+            'courseid' => $course->id,
+            'config' => '["this is not an object"]',
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+
+        // The web service should catch the malformed JSON, ignore it, and fallback gracefully
+        // without throwing a PHP TypeError or JsonException.
+        $result = get_config::execute($course->id);
+        $result = external_api::clean_returnvalue(get_config::execute_returns(), $result);
+        $decoded = json_decode($result, true);
+
+        // It should fallback to global config.
+        $this->assertEquals('dark', $decoded['theme']);
+        $this->assertEquals('large', $decoded['density']);
+    }
 }
