@@ -17,9 +17,6 @@
 namespace local_h5pthemer\privacy;
 
 use core_privacy\tests\provider_testcase;
-use PHPUnit\Framework\Attributes\CoversClass;
-
-// phpcs:disable moodle.PHPUnit.TestCaseCovers.Missing
 
 /**
  * Privacy Subsystem testcase for local_h5pthemer.
@@ -28,9 +25,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
  * @category    test
  * @copyright   2026 Matheus Mathias
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers      \local_h5pthemer\privacy\provider
  */
-#[CoversClass(\local_h5pthemer\privacy\provider::class)]
-class privacy_test extends provider_testcase {
+final class provider_test extends provider_testcase {
     /**
      * Test the reason for null provider.
      */
