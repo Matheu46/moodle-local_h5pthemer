@@ -403,4 +403,93 @@ class util {
 
         return true;
     }
+
+    /**
+     * Retrieves the resolved configuration for a specific course context.
+     * Merges global, category, and course configurations top-down.
+     *
+     * @param int $courseid
+     * @return array The resolved configuration array
+     */
+    public static function get_resolved_config_for_course($courseid) {
+        global $SITE, $DB;
+
+        $finalconfig = [];
+        $accumulatedcss = '';
+
+        // 1. Global config
+        $jsonconfig = get_config('local_h5pthemer', 'css_variables');
+        if ($jsonconfig) {
+            $parsed = json_decode($jsonconfig, true);
+            if (is_array($parsed)) {
+                $finalconfig = $parsed;
+            }
+        }
+        $globalcss = get_config('local_h5pthemer', 'custom_css');
+        if (!empty($globalcss)) {
+            $accumulatedcss .= $globalcss . "\n";
+        }
+
+        if ($courseid && $courseid != $SITE->id) {
+            // 2. Categories (Top-Down: from root to closest)
+            $sql = "SELECT cc.path
+                      FROM {course} c
+                      JOIN {course_categories} cc ON cc.id = c.category
+                     WHERE c.id = :courseid";
+            $path = $DB->get_field_sql($sql, ['courseid' => $courseid]);
+
+            if ($path) {
+                $categoryids = explode('/', trim($path, '/'));
+
+                if (!empty($categoryids)) {
+                    [$insql, $inparams] = $DB->get_in_or_equal($categoryids);
+                    $catconfigs = $DB->get_records_select(
+                        'local_h5pthemer_category',
+                        "categoryid $insql",
+                        $inparams,
+                        '',
+                        'categoryid, config'
+                    );
+
+                    foreach ($categoryids as $catid) {
+                        if (isset($catconfigs[$catid]) && !empty($catconfigs[$catid]->config)) {
+                            $catconfig = json_decode($catconfigs[$catid]->config, true);
+                            if (is_array($catconfig)) {
+                                if (!empty($catconfig['theme']) && $catconfig['theme'] !== 'default') {
+                                    $themeconfig = $catconfig;
+                                    unset($themeconfig['custom_css']);
+                                    $finalconfig = array_merge($finalconfig, $themeconfig);
+                                }
+                                if (!empty($catconfig['custom_css'])) {
+                                    $accumulatedcss .= $catconfig['custom_css'] . "\n";
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 3. Course config
+            $record = $DB->get_record('local_h5pthemer_course', ['courseid' => $courseid], 'config');
+            if ($record && !empty($record->config)) {
+                $courseconfig = json_decode($record->config, true);
+                if (is_array($courseconfig)) {
+                    if (!empty($courseconfig['theme']) && $courseconfig['theme'] !== 'default') {
+                        $themeconfig = $courseconfig;
+                        unset($themeconfig['custom_css']);
+                        $finalconfig = array_merge($finalconfig, $themeconfig);
+                    }
+                    if (!empty($courseconfig['custom_css'])) {
+                        $accumulatedcss .= $courseconfig['custom_css'] . "\n";
+                    }
+                }
+            }
+        }
+
+        if (!empty($accumulatedcss)) {
+            $finalconfig['custom_css'] = trim($accumulatedcss);
+        }
+
+        return $finalconfig;
+    }
 }
