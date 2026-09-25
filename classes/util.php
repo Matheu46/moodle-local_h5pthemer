@@ -492,4 +492,16 @@ class util {
 
         return $finalconfig;
     }
+
+    /**
+     * Generates a lightweight hash for the active configuration.
+     * This is used as a cache key by the frontend to know if settings have changed.
+     *
+     * @param int $courseid
+     * @return string A short hash (e.g. crc32) representing the current config
+     */
+    public static function get_config_hash_for_course($courseid) {
+        $config = self::get_resolved_config_for_course($courseid);
+        return hash('crc32', json_encode($config));
+    }
 }

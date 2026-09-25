@@ -60,9 +60,23 @@ define(['jquery', 'core/ajax'], function($, ajax) {
     }
 
     return {
-        init: function(courseId, initialConfig) {
+        init: function(courseId, cacheKey) {
             $(document).ready(function() {
-                var config = typeof initialConfig === 'object' && initialConfig !== null ? initialConfig : null;
+                var config = null;
+                var storageKey = 'h5pthemer_' + courseId;
+
+                try {
+                    var cachedRaw = sessionStorage.getItem(storageKey);
+                    if (cachedRaw) {
+                        var cachedEntry = JSON.parse(cachedRaw);
+                        if (cachedEntry && cachedEntry.key === cacheKey) {
+                            config = cachedEntry.data;
+                        }
+                    }
+                } catch (e) {
+                    // Ignore storage errors.
+                }
+
                 var fetchingPromise = null;
 
                 /**
@@ -245,6 +259,17 @@ define(['jquery', 'core/ajax'], function($, ajax) {
                             }])[0].done(function(response) {
                                 try {
                                     config = typeof response === 'string' ? JSON.parse(response) : response;
+
+                                    if (cacheKey) {
+                                        try {
+                                            sessionStorage.setItem(storageKey, JSON.stringify({
+                                                key: cacheKey,
+                                                data: config
+                                            }));
+                                        } catch (e) {
+                                            // Ignore storage errors.
+                                        }
+                                    }
                                 } catch (e) {
                                     config = {};
                                 }

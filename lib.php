@@ -37,9 +37,11 @@ function local_h5pthemer_extend_navigation(navigation_node $navigation) {
     }
 
     $courseid = (!empty($COURSE->id)) ? $COURSE->id : SITEID;
+    $cachekey = \local_h5pthemer\util::get_config_hash_for_course($courseid);
 
     // We load the themer AMD module which will look for H5P iframes.
-    $PAGE->requires->js_call_amd('local_h5pthemer/themer', 'init', [$courseid]);
+    // We pass a lightweight cache key to enable sessionStorage.
+    $PAGE->requires->js_call_amd('local_h5pthemer/themer', 'init', [$courseid, $cachekey]);
 }
 
 /**
