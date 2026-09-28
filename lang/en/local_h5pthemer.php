@@ -60,6 +60,7 @@ $string['selector_density_value_medium'] = 'Medium';
 $string['selector_density_value_small'] = 'Compact';
 $string['selector_theme_label'] = 'Theme';
 $string['selector_theme_value_custom'] = 'Custom Theme';
+$string['selector_theme_value_dark'] = 'Dark';
 $string['selector_theme_value_daylight'] = 'Daylight (default)';
 $string['selector_theme_value_lavender'] = 'Lavender';
 $string['selector_theme_value_mint'] = 'Mint';

@@ -25,8 +25,9 @@ define([
     'core/config',
     'core/str',
     'core/notification',
-    'core/templates'
-], function($, cfg, str, notification, templates) {
+    'core/templates',
+    'local_h5pthemer/presets'
+], function($, cfg, str, notification, templates, presetsModule) {
     var componentTranslations = null;
     var uiTranslations = {};
 
@@ -123,13 +124,17 @@ define([
             }
         }
 
+        var builtInPresets = presetsModule.getBuiltInPresets(translations);
+
+        options.customPresets = builtInPresets;
+
         if (presetsTextarea && presetsTextarea.length) {
             var presetsVal = presetsTextarea.val();
             if (presetsVal && presetsVal.trim() !== '') {
                 try {
                     var presetsArr = JSON.parse(presetsVal);
-                    // Pass the object directly into options
-                    options.customPresets = mapPresetsForComponent(presetsArr);
+                    var userPresets = mapPresetsForComponent(presetsArr);
+                    options.customPresets = Object.assign({}, builtInPresets, userPresets);
                 } catch (e) {
                     // Ignore JSON error
                 }
@@ -707,44 +712,45 @@ define([
     function initializeUI(textarea, presetsTextarea, presetsReadonly, strs) {
         componentTranslations = {
             'selector_theme_label': strs[0],
-            'selector_theme_value_daylight': strs[1],
-            'selector_theme_value_lavender': strs[2],
-            'selector_theme_value_mint': strs[3],
-            'selector_theme_value_sunset': strs[4],
-            'selector_theme_value_custom': strs[5],
-            'selector_density_label': strs[6],
-            'selector_density_value_large': strs[7],
-            'selector_density_value_medium': strs[8],
-            'selector_density_value_small': strs[9],
-            'color_selector_title': strs[10],
-            'color_selector_buttons_label': strs[11],
-            'color_selector_buttons_button_aria': strs[12],
-            'color_selector_navigation_label': strs[13],
-            'color_selector_navigation_button_aria': strs[14],
-            'color_selector_alternative_label': strs[15],
-            'color_selector_alternative_button_aria': strs[16],
-            'color_selector_background_label': strs[17],
-            'color_selector_background_button_aria': strs[18],
-            'preview_preview_label_prefix': strs[19]
+            'selector_theme_value_dark': strs[1],
+            'selector_theme_value_daylight': strs[2],
+            'selector_theme_value_lavender': strs[3],
+            'selector_theme_value_mint': strs[4],
+            'selector_theme_value_sunset': strs[5],
+            'selector_theme_value_custom': strs[6],
+            'selector_density_label': strs[7],
+            'selector_density_value_large': strs[8],
+            'selector_density_value_medium': strs[9],
+            'selector_density_value_small': strs[10],
+            'color_selector_title': strs[11],
+            'color_selector_buttons_label': strs[12],
+            'color_selector_buttons_button_aria': strs[13],
+            'color_selector_navigation_label': strs[14],
+            'color_selector_navigation_button_aria': strs[15],
+            'color_selector_alternative_label': strs[16],
+            'color_selector_alternative_button_aria': strs[17],
+            'color_selector_background_label': strs[18],
+            'color_selector_background_button_aria': strs[19],
+            'preview_preview_label_prefix': strs[20]
         };
         uiTranslations = {
-            'preset_name': strs[20],
-            'save_new_preset': strs[21],
-            'saved_custom_themes': strs[22],
-            'delete': strs[23],
-            'confirm_delete_preset': strs[24],
-            'confirm': strs[25],
-            'cancel': strs[26],
-            'edit': strs[27],
-            'update_preset': strs[28],
-            'export': strs[29],
-            'importpreset': strs[30],
-            'importpreset_error': strs[31],
-            'themecolors': strs[32],
-            'custom_css': strs[33],
-            'custom_css_desc': strs[34],
-            'custom_css_cumulative': strs[35],
-            'custom_css_readonly': strs[36]
+            'preset_name': strs[21],
+            'save_new_preset': strs[22],
+            'saved_custom_themes': strs[23],
+            'delete': strs[24],
+            'confirm_delete_preset': strs[25],
+            'confirm': strs[26],
+            'cancel': strs[27],
+            'edit': strs[28],
+            'update_preset': strs[29],
+            'export': strs[30],
+            'importpreset': strs[31],
+            'importpreset_error': strs[32],
+            'themecolors': strs[33],
+            'custom_css': strs[34],
+            'custom_css_desc': strs[35],
+            'custom_css_cumulative': strs[36],
+            'custom_css_readonly': strs[37]
         };
 
         var activePresetsTextarea = null;
@@ -800,6 +806,7 @@ define([
                 // Load translations from Moodle before initializing the picker
                 str.get_strings([
                     {key: 'selector_theme_label', component: 'local_h5pthemer'},
+                    {key: 'selector_theme_value_dark', component: 'local_h5pthemer'},
                     {key: 'selector_theme_value_daylight', component: 'local_h5pthemer'},
                     {key: 'selector_theme_value_lavender', component: 'local_h5pthemer'},
                     {key: 'selector_theme_value_mint', component: 'local_h5pthemer'},
