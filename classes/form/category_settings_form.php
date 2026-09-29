@@ -39,6 +39,11 @@ class category_settings_form extends \moodleform {
         $mform->setType('id', PARAM_INT);
         if (isset($this->_customdata['categoryid'])) {
             $mform->setDefault('id', $this->_customdata['categoryid']);
+
+            // Add inheritance data
+            $inheritance = \local_h5pthemer\util::get_inheritance_details(null, $this->_customdata['categoryid']);
+            $mform->addElement('hidden', 'local_h5pthemer_inheritance_json', json_encode($inheritance), ['id' => 'id_local_h5pthemer_inheritance_json']);
+            $mform->setType('local_h5pthemer_inheritance_json', PARAM_RAW);
         }
 
         $mform->addElement(

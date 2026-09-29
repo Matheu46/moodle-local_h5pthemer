@@ -504,4 +504,223 @@ class util {
         $config = self::get_resolved_config_for_course($courseid);
         return hash('crc32', json_encode($config));
     }
+
+    /**
+     * Calculates the inheritance tree and active styles for a given context.
+     *
+     * @param int|null $courseid Course ID (if in course context)
+     * @param int|null $categoryid Category ID (if in category context)
+     * @return array Array containing the inheritance resolution and levels tree.
+     */
+    public static function get_inheritance_details(?int $courseid = null, ?int $categoryid = null): array {
+        global $SITE, $DB;
+
+        $levels = [];
+        $totalcsssources = 0;
+        $activethemesource = '';
+        $effectivetheme = 'daylight';
+        $haslocaloverride = false;
+
+        $presetsjson = get_config('local_h5pthemer', 'presets_json');
+        $presets = $presetsjson ? json_decode($presetsjson, true) : [];
+        if (!is_array($presets)) {
+            $presets = [];
+        }
+
+        $getthemelabel = function ($theme) use ($presets) {
+            if (empty($theme) || $theme === 'default') {
+                return get_string('inherited', 'local_h5pthemer');
+            }
+            if ($theme === 'custom') {
+                return get_string('selector_theme_value_custom', 'local_h5pthemer');
+            }
+            $standard = [
+                'daylight' => get_string('selector_theme_value_daylight', 'local_h5pthemer'),
+                'dark' => get_string('selector_theme_value_dark', 'local_h5pthemer'),
+                'lavender' => get_string('selector_theme_value_lavender', 'local_h5pthemer'),
+                'mint' => get_string('selector_theme_value_mint', 'local_h5pthemer'),
+                'sunset' => get_string('selector_theme_value_sunset', 'local_h5pthemer'),
+            ];
+            if (isset($standard[$theme])) {
+                return $standard[$theme];
+            }
+            foreach ($presets as $preset) {
+                if ($preset['id'] === $theme) {
+                    return $preset['name'] ?? $theme;
+                }
+            }
+            return ucfirst($theme);
+        };
+
+        // 1. Global / Site level
+        $globalconfigjson = get_config('local_h5pthemer', 'css_variables');
+        $globaltheme = 'daylight';
+        if ($globalconfigjson) {
+            $parsed = json_decode($globalconfigjson, true);
+            if (is_array($parsed) && !empty($parsed['theme'])) {
+                $globaltheme = $parsed['theme'];
+            }
+        }
+        $globalcss = get_config('local_h5pthemer', 'custom_css');
+        $hasglobalcss = !empty(trim($globalcss));
+        if ($hasglobalcss) {
+            $totalcsssources++;
+        }
+
+        $activethemesource = get_string('settings_site_global', 'local_h5pthemer') ?: 'Site Global';
+        $effectivetheme = $globaltheme;
+
+        $levels[] = [
+            'levelid' => 0,
+            'type' => 'site',
+            'type_label' => 'Global',
+            'name' => $activethemesource,
+            'theme' => $globaltheme,
+            'theme_display' => $getthemelabel($globaltheme),
+            'has_custom_css' => $hasglobalcss,
+            'is_current' => ($courseid === null && $categoryid === null),
+            'is_active_source' => false, // Will be set later
+        ];
+
+        // 2. Categories
+        $targetcatid = null;
+        if ($courseid && $courseid != $SITE->id) {
+            $targetcatid = $DB->get_field('course', 'category', ['id' => $courseid]);
+        } else if ($categoryid) {
+            $targetcatid = $categoryid;
+        }
+
+        if ($targetcatid) {
+            $path = $DB->get_field('course_categories', 'path', ['id' => $targetcatid]);
+            if ($path) {
+                $categoryids = explode('/', trim($path, '/'));
+                if (!empty($categoryids)) {
+                    [$insql, $inparams] = $DB->get_in_or_equal($categoryids);
+                    $catrecords = $DB->get_records_select('course_categories', "id $insql", $inparams, 'depth ASC', 'id, name, depth');
+
+                    $catconfigs = $DB->get_records_select(
+                        'local_h5pthemer_category',
+                        "categoryid $insql",
+                        $inparams,
+                        '',
+                        'categoryid, config'
+                    );
+
+                    foreach ($categoryids as $catid) {
+                        if (!isset($catrecords[$catid])) {
+                            continue;
+                        }
+                        $catname = $catrecords[$catid]->name;
+                        $cattheme = 'default';
+                        $hascatcss = false;
+                        $iscurrent = ($categoryid == $catid && $courseid === null);
+
+                        if (isset($catconfigs[$catid]) && !empty($catconfigs[$catid]->config)) {
+                            $catconfig = json_decode($catconfigs[$catid]->config, true);
+                            if (is_array($catconfig)) {
+                                if (!empty($catconfig['theme']) && $catconfig['theme'] !== 'default') {
+                                    $cattheme = $catconfig['theme'];
+                                    $effectivetheme = $cattheme;
+                                    $activethemesource = $catname;
+                                    if ($iscurrent) {
+                                        $haslocaloverride = true;
+                                    }
+                                }
+                                if (!empty($catconfig['custom_css'])) {
+                                    $hascatcss = true;
+                                    $totalcsssources++;
+                                }
+                            }
+                        }
+
+                        $levels[] = [
+                            'levelid' => $catid,
+                            'type' => 'category',
+                            'type_label' => get_string('category'),
+                            'name' => $catname,
+                            'theme' => $cattheme,
+                            'theme_display' => $getthemelabel($cattheme),
+                            'has_custom_css' => $hascatcss,
+                            'is_current' => $iscurrent,
+                            'is_active_source' => false,
+                        ];
+                    }
+                }
+            }
+        }
+
+        // 3. Course
+        if ($courseid && $courseid != $SITE->id) {
+            $coursename = $DB->get_field('course', 'fullname', ['id' => $courseid]);
+            $coursetheme = 'default';
+            $hascoursecss = false;
+            $iscurrent = true;
+
+            $record = $DB->get_record('local_h5pthemer_course', ['courseid' => $courseid], 'config');
+            if ($record && !empty($record->config)) {
+                $courseconfig = json_decode($record->config, true);
+                if (is_array($courseconfig)) {
+                    if (!empty($courseconfig['theme']) && $courseconfig['theme'] !== 'default') {
+                        $coursetheme = $courseconfig['theme'];
+                        $effectivetheme = $coursetheme;
+                        $activethemesource = $coursename;
+                        $haslocaloverride = true;
+                    }
+                    if (!empty($courseconfig['custom_css'])) {
+                        $hascoursecss = true;
+                        $totalcsssources++;
+                    }
+                }
+            }
+
+            $levels[] = [
+                'levelid' => $courseid,
+                'type' => 'course',
+                'type_label' => get_string('course'),
+                'name' => $coursename,
+                'theme' => $coursetheme,
+                'theme_display' => $getthemelabel($coursetheme),
+                'has_custom_css' => $hascoursecss,
+                'is_current' => $iscurrent,
+                'is_active_source' => false,
+            ];
+        }
+
+        // Mark the active source
+        $foundactive = false;
+        for ($i = count($levels) - 1; $i >= 0; $i--) {
+            if ($levels[$i]['theme'] !== 'default' && !$foundactive) {
+                $levels[$i]['is_active_source'] = true;
+                $foundactive = true;
+            }
+        }
+
+        // If nothing was overridden, global is the active source.
+        if (!$foundactive && !empty($levels)) {
+            $levels[0]['is_active_source'] = true;
+        }
+
+        // Generate the reset URL
+        $reseturl = null;
+        if ($haslocaloverride || ($courseid && $levels[count($levels) - 1]['has_custom_css']) || ($categoryid && $levels[count($levels) - 1]['has_custom_css'])) {
+            $canreset = true;
+            if ($courseid) {
+                $reseturl = new \moodle_url('/local/h5pthemer/course_settings.php', ['id' => $courseid, 'reset_inheritance' => 1, 'sesskey' => sesskey()]);
+            } else if ($categoryid) {
+                $reseturl = new \moodle_url('/local/h5pthemer/category_settings.php', ['id' => $categoryid, 'reset_inheritance' => 1, 'sesskey' => sesskey()]);
+            }
+        }
+
+        return [
+            'has_inheritance' => count($levels) > 1,
+            'effective_theme' => $effectivetheme,
+            'effective_theme_label' => $getthemelabel($effectivetheme),
+            'effective_theme_source' => $activethemesource,
+            'total_css_sources' => $totalcsssources,
+            'has_local_override' => $haslocaloverride,
+            'levels' => $levels,
+            'can_reset' => !empty($reseturl),
+            'reset_url' => $reseturl ? $reseturl->out(false) : null,
+        ];
+    }
 }

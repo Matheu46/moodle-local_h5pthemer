@@ -40,6 +40,13 @@ $PAGE->set_pagelayout('admin');
 
 $PAGE->requires->js_call_amd('local_h5pthemer/settings', 'init');
 
+if (optional_param('reset_inheritance', 0, PARAM_INT) == 1) {
+    require_sesskey();
+    $DB->delete_records('local_h5pthemer_category', ['categoryid' => $id]);
+    \core\notification::success(get_string('inheritance_reset_success', 'local_h5pthemer'));
+    redirect(new moodle_url('/local/h5pthemer/category_settings.php', ['id' => $id]));
+}
+
 $mform = new \local_h5pthemer\form\category_settings_form(null, ['categoryid' => $id]);
 
 if ($mform->is_cancelled()) {

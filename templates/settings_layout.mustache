@@ -34,6 +34,69 @@
 }}
 
 <div class="h5p-themer-settings-container" id="h5p-themer-settings-container">
+    {{#inheritance}}
+    {{#has_inheritance}}
+    <div class="accordion mb-4" id="h5p-themer-inheritance-accordion">
+        <div class="accordion-item card h5p-themer-card">
+            <h2 class="accordion-header card-header bg-light-subtle d-flex flex-wrap align-items-center justify-content-between p-0 m-0 border-bottom-0" id="headingInheritance">
+                <button class="accordion-button collapsed bg-transparent py-2 px-3 fw-bold shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInheritance" aria-expanded="false" aria-controls="collapseInheritance" data-toggle="collapse" data-target="#collapseInheritance">
+                    <i class="fa fa-sitemap text-primary me-2" aria-hidden="true"></i>
+                    {{#str}} inheritance_card_title, local_h5pthemer {{/str}}
+                </button>
+            </h2>
+            <div id="collapseInheritance" class="accordion-collapse collapse" aria-labelledby="headingInheritance" data-bs-parent="#h5p-themer-inheritance-accordion" data-parent="#h5p-themer-inheritance-accordion">
+                <div class="accordion-body card-body p-3 p-md-4 border-top">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <span class="badge bg-primary text-white">
+                            {{#str}} effective_theme, local_h5pthemer {{/str}}: <strong>{{effective_theme_label}}</strong>
+                        </span>
+                        {{#can_reset}}
+                        <a href="{{reset_url}}" class="btn btn-sm btn-outline-danger" id="h5p-themer-reset-inheritance-btn">
+                            <i class="fa fa-undo me-1" aria-hidden="true"></i> {{#str}} reset_to_inherited, local_h5pthemer {{/str}}
+                        </a>
+                        {{/can_reset}}
+                    </div>
+                    <p class="text-muted small mb-3">
+                        {{#str}} inheritance_card_desc, local_h5pthemer {{/str}}
+                    </p>
+
+                    <div class="h5p-themer-inheritance-tree list-group list-group-flush border rounded-3">
+                        {{#levels}}
+                        <div class="list-group-item d-flex align-items-center justify-content-between py-2 px-3 {{#is_current}}bg-light{{/is_current}}">
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="badge {{#is_active_source}}bg-success text-white{{/is_active_source}}{{^is_active_source}}bg-secondary text-white{{/is_active_source}}">
+                                    {{type_label}}
+                                </span>
+                                <div>
+                                    <strong class="{{#is_current}}text-primary{{/is_current}}">{{name}}</strong>
+                                    {{#is_current}}<span class="badge bg-info ms-2">{{#str}} this_level, local_h5pthemer {{/str}}</span>{{/is_current}}
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-4 small text-end">
+                                <div>
+                                    <span class="text-muted d-block">{{#str}} selector_theme_label, local_h5pthemer {{/str}}</span>
+                                    <span class="{{#is_active_source}}fw-bold text-success{{/is_active_source}}">
+                                        {{theme_display}} {{#is_active_source}}<i class="fa fa-check-circle" title="{{#str}} active_theme_source, local_h5pthemer {{/str}}"></i>{{/is_active_source}}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span class="text-muted d-block">CSS</span>
+                                    <span class="{{#has_custom_css}}badge bg-info-subtle text-info border border-info{{/has_custom_css}}{{^has_custom_css}}text-muted{{/has_custom_css}}">
+                                        {{#has_custom_css}}{{#str}} custom_css_cumulative, local_h5pthemer {{/str}}{{/has_custom_css}}
+                                        {{^has_custom_css}}—{{/has_custom_css}}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        {{/levels}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{/has_inheritance}}
+    {{/inheritance}}
+
     <div class="card h5p-themer-card mb-4">
         <div class="card-header d-flex align-items-center justify-content-between py-2 px-3">
             <h5 class="card-title mb-0 d-flex align-items-center fs-6 fw-bold">
@@ -41,6 +104,15 @@
             </h5>
         </div>
         <div class="card-body p-3 p-md-4">
+            {{#inheritance.has_inheritance}}
+            <div class="form-check form-switch mb-3 pb-3 border-bottom">
+                <input class="form-check-input" type="checkbox" id="h5p-themer-inherit-theme-switch">
+                <label class="form-check-label fw-bold" for="h5p-themer-inherit-theme-switch">
+                    {{#str}} inherit_theme, local_h5pthemer {{/str}}
+                </label>
+                <div class="form-text mt-0">{{#str}} inherit_theme_desc, local_h5pthemer {{/str}}</div>
+            </div>
+            {{/inheritance.has_inheritance}}
             <div class="h5p-themer-picker-wrapper mb-2" id="h5p-themer-picker-container">
                 <!-- pickerEl will be appended here -->
             </div>
