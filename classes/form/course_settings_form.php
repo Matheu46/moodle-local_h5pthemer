@@ -40,9 +40,14 @@ class course_settings_form extends \moodleform {
         if (isset($this->_customdata['courseid'])) {
             $mform->setDefault('id', $this->_customdata['courseid']);
 
-            // Add inheritance data
+            // Add inheritance data.
             $inheritance = \local_h5pthemer\util::get_inheritance_details($this->_customdata['courseid'], null);
-            $mform->addElement('hidden', 'local_h5pthemer_inheritance_json', json_encode($inheritance), ['id' => 'id_local_h5pthemer_inheritance_json']);
+            $mform->addElement(
+                'hidden',
+                'local_h5pthemer_inheritance_json',
+                json_encode($inheritance),
+                ['id' => 'id_local_h5pthemer_inheritance_json']
+            );
             $mform->setType('local_h5pthemer_inheritance_json', PARAM_RAW);
         }
 

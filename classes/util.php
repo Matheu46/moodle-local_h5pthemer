@@ -579,10 +579,10 @@ class util {
             'theme_display' => $getthemelabel($globaltheme),
             'has_custom_css' => $hasglobalcss,
             'is_current' => ($courseid === null && $categoryid === null),
-            'is_active_source' => false, // Will be set later
+            'is_active_source' => false, // Will be set later.
         ];
 
-        // 2. Categories
+        // 2. Categories.
         $targetcatid = null;
         if ($courseid && $courseid != $SITE->id) {
             $targetcatid = $DB->get_field('course', 'category', ['id' => $courseid]);
@@ -596,7 +596,13 @@ class util {
                 $categoryids = explode('/', trim($path, '/'));
                 if (!empty($categoryids)) {
                     [$insql, $inparams] = $DB->get_in_or_equal($categoryids);
-                    $catrecords = $DB->get_records_select('course_categories', "id $insql", $inparams, 'depth ASC', 'id, name, depth');
+                    $catrecords = $DB->get_records_select(
+                        'course_categories',
+                        "id $insql",
+                        $inparams,
+                        'depth ASC',
+                        'id, name, depth'
+                    );
 
                     $catconfigs = $DB->get_records_select(
                         'local_h5pthemer_category',
@@ -686,7 +692,7 @@ class util {
             ];
         }
 
-        // Mark the active source
+        // Mark the active source.
         $foundactive = false;
         for ($i = count($levels) - 1; $i >= 0; $i--) {
             if ($levels[$i]['theme'] !== 'default' && !$foundactive) {
@@ -700,14 +706,24 @@ class util {
             $levels[0]['is_active_source'] = true;
         }
 
-        // Generate the reset URL
+        // Generate the reset URL.
         $reseturl = null;
-        if ($haslocaloverride || ($courseid && $levels[count($levels) - 1]['has_custom_css']) || ($categoryid && $levels[count($levels) - 1]['has_custom_css'])) {
+        $lastindex = count($levels) - 1;
+        $haslastcss = !empty($levels) && !empty($levels[$lastindex]['has_custom_css']);
+        if ($haslocaloverride || ($courseid && $haslastcss) || ($categoryid && $haslastcss)) {
             $canreset = true;
             if ($courseid) {
-                $reseturl = new \moodle_url('/local/h5pthemer/course_settings.php', ['id' => $courseid, 'reset_inheritance' => 1, 'sesskey' => sesskey()]);
+                $reseturl = new \moodle_url('/local/h5pthemer/course_settings.php', [
+                    'id' => $courseid,
+                    'reset_inheritance' => 1,
+                    'sesskey' => sesskey(),
+                ]);
             } else if ($categoryid) {
-                $reseturl = new \moodle_url('/local/h5pthemer/category_settings.php', ['id' => $categoryid, 'reset_inheritance' => 1, 'sesskey' => sesskey()]);
+                $reseturl = new \moodle_url('/local/h5pthemer/category_settings.php', [
+                    'id' => $categoryid,
+                    'reset_inheritance' => 1,
+                    'sesskey' => sesskey(),
+                ]);
             }
         }
 

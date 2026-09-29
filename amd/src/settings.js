@@ -642,6 +642,33 @@ define([
     }
 
     /**
+     * Handles clicking on the reset inheritance button with confirmation.
+     *
+     * @param {Event} e The click event.
+     */
+    function handleResetInheritance(e) {
+        e.preventDefault();
+        var url = $(e.currentTarget).attr('href');
+        str.get_strings([
+            {key: 'reset_to_inherited', component: 'local_h5pthemer'},
+            {key: 'confirm_reset_inheritance', component: 'local_h5pthemer'},
+            {key: 'yes', component: 'moodle'},
+            {key: 'no', component: 'moodle'}
+        ]).then(function(strings) {
+            notification.confirm(
+                strings[0],
+                strings[1],
+                strings[2],
+                strings[3],
+                function() {
+                    window.location.href = url;
+                }
+            );
+            return null;
+        }).catch(notification.exception);
+    }
+
+    /**
      * Builds the complete card-based settings layout.
      *
      * @param {jQuery} textarea The main theme config textarea
@@ -676,26 +703,7 @@ define([
             var container = $(html);
 
             // Handle reset inheritance click
-            container.find('#h5p-themer-reset-inheritance-btn').on('click', function(e) {
-                e.preventDefault();
-                var url = $(this).attr('href');
-                str.get_strings([
-                    {key: 'reset_to_inherited', component: 'local_h5pthemer'},
-                    {key: 'confirm_reset_inheritance', component: 'local_h5pthemer'},
-                    {key: 'yes', component: 'moodle'},
-                    {key: 'no', component: 'moodle'}
-                ]).then(function(strings) {
-                    notification.confirm(
-                        strings[0],
-                        strings[1],
-                        strings[2],
-                        strings[3],
-                        function() {
-                            window.location.href = url;
-                        }
-                    );
-                }).catch(notification.exception);
-            });
+            container.find('#h5p-themer-reset-inheritance-btn').on('click', handleResetInheritance);
 
             container.find('#h5p-themer-picker-container').append(pickerEl);
 
