@@ -39,6 +39,13 @@ $PAGE->set_heading($course->fullname);
 
 $PAGE->requires->js_call_amd('local_h5pthemer/settings', 'init');
 
+if (optional_param('reset_inheritance', 0, PARAM_INT) == 1) {
+    require_sesskey();
+    $DB->delete_records('local_h5pthemer_course', ['courseid' => $id]);
+    \core\notification::success(get_string('inheritance_reset_success', 'local_h5pthemer'));
+    redirect(new moodle_url('/local/h5pthemer/course_settings.php', ['id' => $id]));
+}
+
 $mform = new \local_h5pthemer\form\course_settings_form(null, ['courseid' => $id]);
 
 if ($mform->is_cancelled()) {

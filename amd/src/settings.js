@@ -642,6 +642,33 @@ define([
     }
 
     /**
+     * Handles clicking on the reset inheritance button with confirmation.
+     *
+     * @param {Event} e The click event.
+     */
+    function handleResetInheritance(e) {
+        e.preventDefault();
+        var url = $(e.currentTarget).attr('href');
+        str.get_strings([
+            {key: 'reset_to_inherited', component: 'local_h5pthemer'},
+            {key: 'confirm_reset_inheritance', component: 'local_h5pthemer'},
+            {key: 'yes', component: 'moodle'},
+            {key: 'no', component: 'moodle'}
+        ]).then(function(strings) {
+            notification.confirm(
+                strings[0],
+                strings[1],
+                strings[2],
+                strings[3],
+                function() {
+                    window.location.href = url;
+                }
+            );
+            return null;
+        }).catch(notification.exception);
+    }
+
+    /**
      * Builds the complete card-based settings layout.
      *
      * @param {jQuery} textarea The main theme config textarea
@@ -655,14 +682,28 @@ define([
         var hasCustomCss = cssTextarea.length > 0;
         var isReadonly = hasCustomCss ? cssTextarea.is('[readonly]') : false;
 
+        var inheritanceData = null;
+        var inheritanceInput = $('#id_local_h5pthemer_inheritance_json');
+        if (inheritanceInput.length && inheritanceInput.val()) {
+            try {
+                inheritanceData = JSON.parse(inheritanceInput.val());
+            } catch (e) {
+                // Ignore parse errors
+            }
+        }
+
         var context = {
             isGlobalAdmin: !!(isGlobalAdmin && activePresetsTextarea),
             hasCustomCss: hasCustomCss,
-            isReadonly: isReadonly
+            isReadonly: isReadonly,
+            inheritance: inheritanceData
         };
 
         templates.render('local_h5pthemer/settings_layout', context).then(function(html, js) {
             var container = $(html);
+
+            // Handle reset inheritance click
+            container.find('#h5p-themer-reset-inheritance-btn').on('click', handleResetInheritance);
 
             container.find('#h5p-themer-picker-container').append(pickerEl);
 
@@ -680,6 +721,39 @@ define([
                 if (cssFitem.length) {
                     cssFitem.hide();
                 }
+            }
+
+            var inheritSwitch = container.find('#h5p-themer-inherit-theme-switch');
+            if (inheritSwitch.length) {
+                var pickerWrapper = container.find('#h5p-themer-picker-container');
+                var isInheriting = false;
+
+                try {
+                    var currentConf = JSON.parse(textarea.val() || '{}');
+                    isInheriting = (!currentConf.theme || currentConf.theme === 'default');
+                } catch (e) {
+                    // Ignore
+                }
+
+                inheritSwitch.prop('checked', isInheriting);
+                if (isInheriting) {
+                    pickerWrapper.hide();
+                }
+
+                inheritSwitch.on('change', function() {
+                    if ($(this).is(':checked')) {
+                        pickerWrapper.hide();
+                        textarea.val('{"theme":"default"}');
+                    } else {
+                        pickerWrapper.show();
+                        var fallbackVal = pickerEl.getAttribute('value');
+                        if (!fallbackVal || fallbackVal === '{"theme":"default"}') {
+                            fallbackVal = '{"theme":"daylight"}';
+                            pickerEl.setAttribute('value', fallbackVal);
+                        }
+                        textarea.val(fallbackVal);
+                    }
+                });
             }
 
             var fitem = textarea.closest('.form-item, .fitem');

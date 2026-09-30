@@ -286,4 +286,98 @@ final class util_test extends advanced_testcase {
         $page->set_pagelayout('course');
         $this->assertFalse(util::should_load_themer($page));
     }
+
+    /**
+     * Test get_inheritance_details when inheriting from site global.
+     */
+    public function test_get_inheritance_details_hierarchy(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        set_config('css_variables', json_encode(['theme' => 'mint']), 'local_h5pthemer');
+
+        $generator = $this->getDataGenerator();
+        $cat = $generator->create_category();
+        $course = $generator->create_course(['category' => $cat->id]);
+
+        $details = util::get_inheritance_details($course->id, null);
+
+        $this->assertTrue($details['has_inheritance']);
+        $this->assertEquals('mint', $details['effective_theme']);
+        $this->assertCount(3, $details['levels']); // Should contain site global, category, and course levels.
+
+        // Check Global Level.
+        $global = $details['levels'][0];
+        $this->assertEquals('site', $global['type']);
+        $this->assertTrue($global['is_active_source']);
+        $this->assertFalse($global['is_current']);
+        $this->assertNotNull($global['edit_url']); // Admin user has an edit URL.
+
+        // Check Course Level.
+        $courselevel = end($details['levels']);
+        $this->assertEquals('course', $courselevel['type']);
+        $this->assertFalse($courselevel['is_active_source']);
+        $this->assertTrue($courselevel['is_current']);
+    }
+
+    /**
+     * Test get_inheritance_details when course overrides the theme.
+     */
+    public function test_get_inheritance_details_override_and_reset(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        set_config('css_variables', json_encode(['theme' => 'daylight']), 'local_h5pthemer');
+
+        $generator = $this->getDataGenerator();
+        $cat = $generator->create_category();
+        $course = $generator->create_course(['category' => $cat->id]);
+
+        // Create an override at the course level.
+        $DB->insert_record('local_h5pthemer_course', [
+            'courseid' => $course->id,
+            'config' => json_encode(['theme' => 'sunset', 'custom_css' => 'body { color: red; }']),
+        ]);
+
+        $details = util::get_inheritance_details($course->id, null);
+
+        $this->assertTrue($details['has_inheritance']);
+        $this->assertEquals('sunset', $details['effective_theme']);
+        $this->assertEquals(1, $details['total_css_sources']); // The course has custom CSS.
+
+        // Check Course Level.
+        $courselevel = end($details['levels']);
+        $this->assertTrue($courselevel['is_active_source']);
+
+        $this->assertTrue($details['can_reset']);
+        $this->assertStringContainsString('reset_inheritance=1', $details['reset_url']);
+    }
+
+    /**
+     * Test get_inheritance_details permissions for edit_urls.
+     */
+    public function test_get_inheritance_details_edit_urls_permissions(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        $generator = $this->getDataGenerator();
+        $cat = $generator->create_category();
+        $course = $generator->create_course(['category' => $cat->id]);
+
+        $teacher = $generator->create_user();
+        $generator->enrol_user($teacher->id, $course->id, 'editingteacher');
+
+        $this->setUser($teacher);
+
+        $details = util::get_inheritance_details($course->id, null);
+
+        $global = $details['levels'][0];
+        $this->assertNull($global['edit_url']); // Teacher does not have moodle/site:config capability.
+
+        // Check Category Level (index 1).
+        $catlevel = $details['levels'][1];
+        $this->assertNull($catlevel['edit_url']); // Teacher does not have moodle/category:manage capability.
+    }
 }
