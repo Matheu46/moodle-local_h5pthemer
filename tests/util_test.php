@@ -305,14 +305,14 @@ final class util_test extends advanced_testcase {
 
         $this->assertTrue($details['has_inheritance']);
         $this->assertEquals('mint', $details['effective_theme']);
-        $this->assertEquals(3, count($details['levels'])); // Global, Category, Course
+        $this->assertCount(3, $details['levels']); // Should contain site global, category, and course levels.
 
         // Check Global Level.
         $global = $details['levels'][0];
         $this->assertEquals('site', $global['type']);
         $this->assertTrue($global['is_active_source']);
         $this->assertFalse($global['is_current']);
-        $this->assertNotNull($global['edit_url']); // Admin user has edit_url
+        $this->assertNotNull($global['edit_url']); // Admin user has an edit URL.
 
         // Check Course Level.
         $courselevel = end($details['levels']);
@@ -345,7 +345,7 @@ final class util_test extends advanced_testcase {
 
         $this->assertTrue($details['has_inheritance']);
         $this->assertEquals('sunset', $details['effective_theme']);
-        $this->assertEquals(1, $details['total_css_sources']); // the course has css
+        $this->assertEquals(1, $details['total_css_sources']); // The course has custom CSS.
 
         // Check Course Level.
         $courselevel = end($details['levels']);
@@ -374,10 +374,10 @@ final class util_test extends advanced_testcase {
         $details = util::get_inheritance_details($course->id, null);
 
         $global = $details['levels'][0];
-        $this->assertNull($global['edit_url']); // Teacher does not have moodle/site:config
+        $this->assertNull($global['edit_url']); // Teacher does not have moodle/site:config capability.
 
         // Check Category Level (index 1).
         $catlevel = $details['levels'][1];
-        $this->assertNull($catlevel['edit_url']); // Teacher does not have moodle/category:manage
+        $this->assertNull($catlevel['edit_url']); // Teacher does not have moodle/category:manage capability.
     }
 }
