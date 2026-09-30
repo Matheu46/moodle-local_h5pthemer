@@ -35,6 +35,8 @@ class backup_local_h5pthemer_plugin extends backup_local_plugin {
      * @return backup_plugin_element
      */
     protected function define_course_plugin_structure(): backup_nested_element {
+        global $DB;
+
         $plugin = $this->get_plugin_element(null);
 
         // Use the recommended plugin wrapper to encapsulate all plugin data.
@@ -46,10 +48,11 @@ class backup_local_h5pthemer_plugin extends backup_local_plugin {
         $pluginwrapper->add_child($coursenode);
 
         $courseid = $this->step->get_task()->get_courseid();
-        $configvalue = get_config('local_h5pthemer', "course_{$courseid}_config");
+        $record = $DB->get_record('local_h5pthemer_course', ['courseid' => $courseid], 'id, config');
+        $configvalue = ($record && !empty($record->config)) ? $record->config : '';
 
         $coursenode->set_source_array([
-            ['id' => $courseid, 'configvalue' => $configvalue !== false ? $configvalue : ''],
+            ['id' => $courseid, 'configvalue' => $configvalue],
         ]);
 
         return $plugin;

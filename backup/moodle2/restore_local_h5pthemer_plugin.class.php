@@ -58,11 +58,50 @@ class restore_local_h5pthemer_plugin extends restore_local_plugin {
      * @return void
      */
     public function after_restore_course() {
+        global $DB;
+
         $courseid = $this->task->get_courseid();
 
         // Restore course-level configuration.
-        if ($this->courseconfig && isset($this->courseconfig->configvalue)) {
-            set_config("course_{$courseid}_config", $this->courseconfig->configvalue, 'local_h5pthemer');
+        if ($this->courseconfig && !empty($this->courseconfig->configvalue)) {
+            $raw = $this->courseconfig->configvalue;
+            $data = json_decode($raw, true);
+
+            if (is_array($data)) {
+                $customcss = $data['custom_css'] ?? null;
+                unset($data['custom_css']);
+
+                // Clean and normalize theme settings (theme, density, colors).
+                $cleanedjson = \local_h5pthemer\util::clean_theme_config(json_encode($data));
+                $cleaneddata = json_decode($cleanedjson, true) ?: [];
+
+                // Restore custom CSS only if the restoring user has site config privileges.
+                if (
+                    !empty($customcss) && is_string($customcss) &&
+                    has_capability('moodle/site:config', \context_system::instance())
+                ) {
+                    $cleaneddata['custom_css'] = $customcss;
+                }
+
+                $finalconfig = !empty($cleaneddata) ? json_encode($cleaneddata) : '';
+
+                if ($finalconfig !== '') {
+                    $existing = $DB->get_record('local_h5pthemer_course', ['courseid' => $courseid]);
+                    if ($existing) {
+                        $existing->config = $finalconfig;
+                        $existing->timemodified = time();
+                        $DB->update_record('local_h5pthemer_course', $existing);
+                    } else {
+                        $newrec = (object)[
+                            'courseid' => $courseid,
+                            'config' => $finalconfig,
+                            'timecreated' => time(),
+                            'timemodified' => time(),
+                        ];
+                        $DB->insert_record('local_h5pthemer_course', $newrec);
+                    }
+                }
+            }
         }
     }
 }
