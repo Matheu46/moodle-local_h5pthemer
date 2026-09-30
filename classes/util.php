@@ -570,6 +570,13 @@ class util {
         $activethemesource = get_string('settings_site_global', 'local_h5pthemer') ?: 'Site Global';
         $effectivetheme = $globaltheme;
 
+        $syscontext = \context_system::instance();
+        $iscurrentsite = ($courseid === null && $categoryid === null);
+        $globalediturl = null;
+        if (has_capability('moodle/site:config', $syscontext) && !$iscurrentsite) {
+            $globalediturl = (new \moodle_url('/admin/settings.php', ['section' => 'local_h5pthemer']))->out(false);
+        }
+
         $levels[] = [
             'levelid' => 0,
             'type' => 'site',
@@ -578,8 +585,9 @@ class util {
             'theme' => $globaltheme,
             'theme_display' => $getthemelabel($globaltheme),
             'has_custom_css' => $hasglobalcss,
-            'is_current' => ($courseid === null && $categoryid === null),
+            'is_current' => $iscurrentsite,
             'is_active_source' => false, // Will be set later.
+            'edit_url' => $globalediturl,
         ];
 
         // 2. Categories.
@@ -639,6 +647,13 @@ class util {
                             }
                         }
 
+                        $catcontext = \context_coursecat::instance($catid);
+                        $caneditcat = has_capability('moodle/category:manage', $catcontext);
+                        $catediturl = null;
+                        if ($caneditcat && !$iscurrent) {
+                            $catediturl = (new \moodle_url('/local/h5pthemer/category_settings.php', ['id' => $catid]))->out(false);
+                        }
+
                         $levels[] = [
                             'levelid' => $catid,
                             'type' => 'category',
@@ -649,6 +664,7 @@ class util {
                             'has_custom_css' => $hascatcss,
                             'is_current' => $iscurrent,
                             'is_active_source' => false,
+                            'edit_url' => $catediturl,
                         ];
                     }
                 }
@@ -679,6 +695,13 @@ class util {
                 }
             }
 
+            $coursecontext = \context_course::instance($courseid);
+            $caneditcourse = has_capability('moodle/course:update', $coursecontext);
+            $courseediturl = null;
+            if ($caneditcourse && !$iscurrent) {
+                $courseediturl = (new \moodle_url('/local/h5pthemer/course_settings.php', ['id' => $courseid]))->out(false);
+            }
+
             $levels[] = [
                 'levelid' => $courseid,
                 'type' => 'course',
@@ -689,6 +712,7 @@ class util {
                 'has_custom_css' => $hascoursecss,
                 'is_current' => $iscurrent,
                 'is_active_source' => false,
+                'edit_url' => $courseediturl,
             ];
         }
 

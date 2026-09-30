@@ -44,6 +44,7 @@ $string['custom_css_desc'] = 'Add custom CSS rules that will be injected into al
 $string['custom_css_help'] = 'Add CSS rules that will be injected into H5P contents at this level. This CSS is cumulative, meaning it will be appended to any CSS inherited from parent categories and global settings.';
 $string['custom_css_readonly'] = 'Read-only';
 $string['delete'] = 'Delete';
+$string['edit_level_settings'] = 'Edit settings for {$a}';
 $string['effective_theme'] = 'Effective Theme';
 $string['export'] = 'Export';
 $string['has_custom_css_rules'] = 'Has custom CSS rules';
