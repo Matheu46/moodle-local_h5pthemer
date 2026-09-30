@@ -405,6 +405,26 @@ class util {
     }
 
     /**
+     * Purges or invalidates the resolved config cache.
+     *
+     * @param int|null $courseid Course ID to invalidate, or null to purge all.
+     * @return void
+     */
+    public static function purge_resolved_config_cache(?int $courseid = null): void {
+        try {
+            $cache = \cache::make('local_h5pthemer', 'resolved_config');
+            if ($courseid !== null) {
+                $cache->delete((string)$courseid);
+            } else {
+                $cache->purge();
+            }
+        } catch (\Throwable $e) {
+            // Failsafe if cache store is unavailable or uninitialised during upgrade/install.
+            return;
+        }
+    }
+
+    /**
      * Retrieves the resolved configuration for a specific course context.
      * Merges global, category, and course configurations top-down.
      *
@@ -413,6 +433,16 @@ class util {
      */
     public static function get_resolved_config_for_course($courseid) {
         global $SITE, $DB;
+
+        try {
+            $cache = \cache::make('local_h5pthemer', 'resolved_config');
+            $cachedconfig = $cache->get((string)$courseid);
+            if ($cachedconfig !== false) {
+                return $cachedconfig;
+            }
+        } catch (\Throwable $e) {
+            $cache = null;
+        }
 
         $finalconfig = [];
         $accumulatedcss = '';
@@ -488,6 +518,10 @@ class util {
 
         if (!empty($accumulatedcss)) {
             $finalconfig['custom_css'] = trim($accumulatedcss);
+        }
+
+        if (isset($cache)) {
+            $cache->set((string)$courseid, $finalconfig);
         }
 
         return $finalconfig;

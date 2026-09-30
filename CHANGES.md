@@ -2,6 +2,14 @@
 
 All notable changes to the **H5P Themer** (`local_h5pthemer`) plugin will be documented in this file.
 
+## [v0.6.1] - 2026-09-01
+
+### Fixed
+- **Backup and Restore Data Integrity**: Updated backup and restore routines to read from and write to the dedicated `{local_h5pthemer_course}` table instead of legacy `config_plugins`. Restored configurations are sanitized using `util::clean_theme_config()` and `custom_css` restoration is strictly restricted to users with `moodle/site:config` privileges.
+
+### Changed / Performance
+- **MUC Application Caching**: Implemented a dedicated Moodle Universal Cache (MUC) definition (`resolved_config`) to cache resolved course configurations. This eliminates the need to execute multiple database queries site-wide on every eligible page render, significantly improving scalability. Cache is automatically invalidated when course, category, or global plugin settings change.
+
 ## [v0.6.0] - 2026-09-30
 
 ### Added

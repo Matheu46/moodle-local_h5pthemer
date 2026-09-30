@@ -43,6 +43,7 @@ $PAGE->requires->js_call_amd('local_h5pthemer/settings', 'init');
 if (optional_param('reset_inheritance', 0, PARAM_INT) == 1) {
     require_sesskey();
     $DB->delete_records('local_h5pthemer_category', ['categoryid' => $id]);
+    \local_h5pthemer\util::purge_resolved_config_cache();
     \core\notification::success(get_string('inheritance_reset_success', 'local_h5pthemer'));
     redirect(new moodle_url('/local/h5pthemer/category_settings.php', ['id' => $id]));
 }
@@ -94,6 +95,8 @@ if ($mform->is_cancelled()) {
         $newrecord->timemodified = time();
         $DB->insert_record('local_h5pthemer_category', $newrecord);
     }
+
+    \local_h5pthemer\util::purge_resolved_config_cache();
 
     \core\notification::success(get_string('changessaved'));
     redirect(new moodle_url('/local/h5pthemer/category_settings.php', ['id' => $id]));

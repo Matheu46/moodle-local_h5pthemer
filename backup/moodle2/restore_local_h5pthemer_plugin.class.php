@@ -100,6 +100,7 @@ class restore_local_h5pthemer_plugin extends restore_local_plugin {
                         ];
                         $DB->insert_record('local_h5pthemer_course', $newrec);
                     }
+                    \local_h5pthemer\util::purge_resolved_config_cache($courseid);
                 }
             }
         }
