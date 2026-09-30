@@ -2,6 +2,22 @@
 
 All notable changes to the **H5P Themer** (`local_h5pthemer`) plugin will be documented in this file.
 
+## [v0.6.0] - 2026-09-30
+
+### Added
+- **Inheritance & Style Origin Panel**: Introduced a visual accordion in Course and Category settings displaying the full cascading tree (Global → Category → Course), highlighting the active theme source, cumulative CSS rules, and resolution hierarchy.
+- **Direct Navigation to Parent Settings**: Added quick-access external links to edit parent configurations (Global Site Admin and Parent Categories) directly from the inheritance panel, securely guarded by capability checks (`moodle/site:config`, `moodle/category:manage`).
+- **Explicit Theme Inheritance Switch**: Added a dedicated "Inherit theme from parent level" checkbox toggle that cleanly hides the color picker and defaults the theme choice, separating theme inheritance from custom CSS overrides.
+- **Reset to Inherited Action**: Added a single-click "Reset to inherited theme" action that clears local overrides and aligns settings with the parent level.
+- **Built-in Dark Theme Preset**: Added a high-contrast native "Dark" preset with modular management via a new AMD module (`amd/src/presets.js`).
+- **Client-Side Caching & FOUC Prevention**: Implemented synchronous `sessionStorage` caching in `themer.js` with hash validation (`util::get_cache_hash`).
+- **Automated Test Coverage**: Added PHPUnit unit tests covering form validation (`tests/form_test.php`), privacy provider subsystem (`tests/privacy/provider_test.php`), and inheritance tree resolution, overrides, and capability-based navigation permissions (`tests/util_test.php`).
+
+### Changed / Improved
+- **Bootstrap Cross-Version Compatibility (Moodle 4.5 to 5.3)**: Added scoped flexbox `gap` utility polyfills in `styles.css` (`.gap-1` through `.gap-5`) ensuring spacing consistency on Moodle 4.5 (Bootstrap 5.0.2) as well as Moodle 5.x (Bootstrap 5.3).
+- **Dark Mode & CSS Modernization (Moodle 5.3)**: Refactored `styles.css` using modern Bootstrap CSS variables (`--bs-card-bg`, `--bs-border-color`, `--bs-tertiary-bg`, `[data-bs-theme="dark"]`) with robust legacy fallbacks.
+- **Runtime Configuration Centralization**: Refactored `get_config` external API to delegate resolution to `util::get_runtime_config()` with internal request-level caching.
+
 ## [v0.5.1] - 2026-09-21
 
 ### Fixed
