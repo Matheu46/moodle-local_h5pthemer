@@ -113,3 +113,24 @@ div.h5p-themer-actions-bar {
     gap: 0.5rem;
     width: 100%;
 }
+
+/* Flex gap polyfill for Moodle 4.5 (Bootstrap 5.0) */
+.h5p-themer-settings-container .gap-1 {
+    gap: 0.25rem;
+}
+
+.h5p-themer-settings-container .gap-2 {
+    gap: 0.5rem;
+}
+
+.h5p-themer-settings-container .gap-3 {
+    gap: 1rem;
+}
+
+.h5p-themer-settings-container .gap-4 {
+    gap: 1.5rem;
+}
+
+.h5p-themer-settings-container .gap-5 {
+    gap: 3rem;
+}
