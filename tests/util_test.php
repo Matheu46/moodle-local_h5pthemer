@@ -399,7 +399,7 @@ final class util_test extends advanced_testcase {
 
         // 2. Fetch config triggers resolution and caching.
         $config1 = util::get_resolved_config_for_course($course->id);
-        
+
         $cached = $cache->get((string)$course->id);
         $this->assertNotFalse($cached);
         $this->assertEquals($config1, $cached);
