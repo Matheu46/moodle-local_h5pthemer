@@ -158,31 +158,40 @@ define([
         var PickerClass = customElements.get('h5p-theme-picker');
         var picker;
 
-        // Temporarily monkey-patch getAttribute to provide the attributes to the Web Component's constructor
-        // because the component currently reads them synchronously before we have a chance to set them.
-        var originalGetAttribute = HTMLElement.prototype.getAttribute;
-        HTMLElement.prototype.getAttribute = function(name) {
-            var mapping = {
-                'custom-color-buttons': options.customColorButtons,
-                'custom-color-navigation': options.customColorNavigation,
-                'custom-color-alternative': options.customColorAlternative,
-                'custom-color-background': options.customColorBackground,
-                'theme-name': options.theme,
-                'density': options.density
+        // Patch getAttribute exclusively on the component's prototype to provide initial attributes
+        // without polluting the global HTMLElement prototype.
+        if (PickerClass) {
+            var originalPickerGetAttribute = PickerClass.prototype.getAttribute || HTMLElement.prototype.getAttribute;
+            PickerClass.prototype.getAttribute = function(name) {
+                var mapping = {
+                    'custom-color-buttons': options.customColorButtons,
+                    'custom-color-navigation': options.customColorNavigation,
+                    'custom-color-alternative': options.customColorAlternative,
+                    'custom-color-background': options.customColorBackground,
+                    'theme-name': options.theme,
+                    'density': options.density
+                };
+                if (mapping[name]) {
+                    return mapping[name];
+                }
+                return originalPickerGetAttribute.call(this, name);
             };
-            if (mapping[name]) {
-                return mapping[name];
-            }
-            return originalGetAttribute.call(this, name);
-        };
-        try {
-            if (PickerClass) {
+            try {
                 picker = new PickerClass(options);
-            } else {
-                picker = document.createElement('h5p-theme-picker');
+            } finally {
+                // Restore or delete the monkey-patched method
+                if (PickerClass.prototype.hasOwnProperty('getAttribute')) {
+                    if (PickerClass.prototype.getAttribute === HTMLElement.prototype.getAttribute) {
+                        // Already restored (or wasn't strictly patched as own property)
+                    } else if (originalPickerGetAttribute === HTMLElement.prototype.getAttribute) {
+                        delete PickerClass.prototype.getAttribute;
+                    } else {
+                        PickerClass.prototype.getAttribute = originalPickerGetAttribute;
+                    }
+                }
             }
-        } finally {
-            HTMLElement.prototype.getAttribute = originalGetAttribute;
+        } else {
+            picker = document.createElement('h5p-theme-picker');
         }
 
         var attributes = {

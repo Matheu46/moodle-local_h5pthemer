@@ -33,6 +33,7 @@ class observer {
     public static function course_deleted(\core\event\course_deleted $event) {
         global $DB;
         $DB->delete_records('local_h5pthemer_course', ['courseid' => $event->objectid]);
+        \local_h5pthemer\util::purge_resolved_config_cache($event->objectid);
     }
 
     /**
@@ -44,5 +45,26 @@ class observer {
     public static function course_category_deleted(\core\event\course_category_deleted $event) {
         global $DB;
         $DB->delete_records('local_h5pthemer_category', ['categoryid' => $event->objectid]);
+        \local_h5pthemer\util::purge_resolved_config_cache();
+    }
+
+    /**
+     * Observer for course updates (including category moves).
+     *
+     * @param \core\event\course_updated $event
+     */
+    public static function course_updated(\core\event\course_updated $event) {
+        \local_h5pthemer\util::purge_resolved_config_cache($event->objectid);
+    }
+
+    /**
+     * Observer for global configuration updates.
+     *
+     * @param \core\event\config_updated $event
+     */
+    public static function config_updated(\core\event\config_updated $event) {
+        if ($event->plugin === 'local_h5pthemer') {
+            \local_h5pthemer\util::purge_resolved_config_cache();
+        }
     }
 }

@@ -380,4 +380,43 @@ final class util_test extends advanced_testcase {
         $catlevel = $details['levels'][1];
         $this->assertNull($catlevel['edit_url']); // Teacher does not have moodle/category:manage capability.
     }
+
+    /**
+     * Test caching of resolved configurations.
+     */
+    public function test_resolved_config_caching(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $cache = \cache::make('local_h5pthemer', 'resolved_config');
+
+        $generator = $this->getDataGenerator();
+        $course = $generator->create_course();
+
+        // 1. Initially cache is empty.
+        $this->assertFalse($cache->get((string)$course->id));
+
+        // 2. Fetch config triggers resolution and caching.
+        $config1 = util::get_resolved_config_for_course($course->id);
+
+        $cached = $cache->get((string)$course->id);
+        $this->assertNotFalse($cached);
+        $this->assertEquals($config1, $cached);
+
+        // 3. Directly manipulate the cache to verify it returns from cache without DB queries.
+        $cache->set((string)$course->id, ['theme' => 'fake_theme_cached']);
+        $config2 = util::get_resolved_config_for_course($course->id);
+        $this->assertEquals('fake_theme_cached', $config2['theme']);
+
+        // 4. Test purge method for specific course.
+        util::purge_resolved_config_cache($course->id);
+        $this->assertFalse($cache->get((string)$course->id));
+
+        // 5. Test purge all.
+        util::get_resolved_config_for_course($course->id);
+        $this->assertNotFalse($cache->get((string)$course->id));
+        util::purge_resolved_config_cache();
+        $this->assertFalse($cache->get((string)$course->id));
+    }
 }

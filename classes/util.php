@@ -405,6 +405,26 @@ class util {
     }
 
     /**
+     * Purges or invalidates the resolved config cache.
+     *
+     * @param int|null $courseid Course ID to invalidate, or null to purge all.
+     * @return void
+     */
+    public static function purge_resolved_config_cache(?int $courseid = null): void {
+        try {
+            $cache = \cache::make('local_h5pthemer', 'resolved_config');
+            if ($courseid !== null) {
+                $cache->delete((string)$courseid);
+            } else {
+                $cache->purge();
+            }
+        } catch (\Throwable $e) {
+            // Failsafe if cache store is unavailable or uninitialised during upgrade/install.
+            return;
+        }
+    }
+
+    /**
      * Retrieves the resolved configuration for a specific course context.
      * Merges global, category, and course configurations top-down.
      *
@@ -413,6 +433,16 @@ class util {
      */
     public static function get_resolved_config_for_course($courseid) {
         global $SITE, $DB;
+
+        try {
+            $cache = \cache::make('local_h5pthemer', 'resolved_config');
+            $cachedconfig = $cache->get((string)$courseid);
+            if ($cachedconfig !== false) {
+                return $cachedconfig;
+            }
+        } catch (\Throwable $e) {
+            $cache = null;
+        }
 
         $finalconfig = [];
         $accumulatedcss = '';
@@ -488,6 +518,10 @@ class util {
 
         if (!empty($accumulatedcss)) {
             $finalconfig['custom_css'] = trim($accumulatedcss);
+        }
+
+        if (isset($cache)) {
+            $cache->set((string)$courseid, $finalconfig);
         }
 
         return $finalconfig;
@@ -624,7 +658,8 @@ class util {
                         if (!isset($catrecords[$catid])) {
                             continue;
                         }
-                        $catname = $catrecords[$catid]->name;
+                        $catcontext = \context_coursecat::instance($catid);
+                        $catname = format_string($catrecords[$catid]->name, true, ['context' => $catcontext]);
                         $cattheme = 'default';
                         $hascatcss = false;
                         $iscurrent = ($categoryid == $catid && $courseid === null);
@@ -647,7 +682,6 @@ class util {
                             }
                         }
 
-                        $catcontext = \context_coursecat::instance($catid);
                         $caneditcat = has_capability('moodle/category:manage', $catcontext);
                         $catediturl = null;
                         if ($caneditcat && !$iscurrent) {
@@ -673,7 +707,9 @@ class util {
 
         // 3. Course
         if ($courseid && $courseid != $SITE->id) {
-            $coursename = $DB->get_field('course', 'fullname', ['id' => $courseid]);
+            $coursecontext = \context_course::instance($courseid);
+            $rawcoursename = $DB->get_field('course', 'fullname', ['id' => $courseid]);
+            $coursename = format_string($rawcoursename, true, ['context' => $coursecontext]);
             $coursetheme = 'default';
             $hascoursecss = false;
             $iscurrent = true;
@@ -695,7 +731,6 @@ class util {
                 }
             }
 
-            $coursecontext = \context_course::instance($courseid);
             $caneditcourse = has_capability('moodle/course:update', $coursecontext);
             $courseediturl = null;
             if ($caneditcourse && !$iscurrent) {

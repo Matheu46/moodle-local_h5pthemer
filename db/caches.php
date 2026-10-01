@@ -1,5 +1,5 @@
 <?php
-// This file is part of Moodle - https://moodle.org/
+// This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -12,21 +12,22 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Plugin version and other meta-data are defined here.
+ * Cache definitions for local_h5pthemer.
  *
- * @package     local_h5pthemer
- * @copyright   2026 Matheus Mathias
- * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    local_h5pthemer
+ * @copyright  2026 Matheus Mathias
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'local_h5pthemer';
-$plugin->release = 'v0.6.0';
-$plugin->version = 2026093001;
-$plugin->requires = 2024100710; // Moodle 4.5 or later.
-$plugin->supported = [405, 503];
-$plugin->maturity = MATURITY_STABLE;
+$definitions = [
+    'resolved_config' => [
+        'mode' => cache_store::MODE_APPLICATION,
+        'simplekeys' => true,
+        'simpledata' => true,
+    ],
+];

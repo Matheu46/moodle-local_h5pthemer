@@ -33,4 +33,12 @@ $observers = [
         'eventname'   => '\core\event\course_category_deleted',
         'callback'    => 'local_h5pthemer\observer::course_category_deleted',
     ],
+    [
+        'eventname'   => '\core\event\course_updated',
+        'callback'    => 'local_h5pthemer\observer::course_updated',
+    ],
+    [
+        'eventname'   => '\core\event\config_updated',
+        'callback'    => 'local_h5pthemer\observer::config_updated',
+    ],
 ];
