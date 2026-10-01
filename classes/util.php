@@ -658,7 +658,8 @@ class util {
                         if (!isset($catrecords[$catid])) {
                             continue;
                         }
-                        $catname = $catrecords[$catid]->name;
+                        $catcontext = \context_coursecat::instance($catid);
+                        $catname = format_string($catrecords[$catid]->name, true, ['context' => $catcontext]);
                         $cattheme = 'default';
                         $hascatcss = false;
                         $iscurrent = ($categoryid == $catid && $courseid === null);
@@ -681,7 +682,6 @@ class util {
                             }
                         }
 
-                        $catcontext = \context_coursecat::instance($catid);
                         $caneditcat = has_capability('moodle/category:manage', $catcontext);
                         $catediturl = null;
                         if ($caneditcat && !$iscurrent) {
@@ -707,7 +707,9 @@ class util {
 
         // 3. Course
         if ($courseid && $courseid != $SITE->id) {
-            $coursename = $DB->get_field('course', 'fullname', ['id' => $courseid]);
+            $coursecontext = \context_course::instance($courseid);
+            $rawcoursename = $DB->get_field('course', 'fullname', ['id' => $courseid]);
+            $coursename = format_string($rawcoursename, true, ['context' => $coursecontext]);
             $coursetheme = 'default';
             $hascoursecss = false;
             $iscurrent = true;
@@ -729,7 +731,6 @@ class util {
                 }
             }
 
-            $coursecontext = \context_course::instance($courseid);
             $caneditcourse = has_capability('moodle/course:update', $coursecontext);
             $courseediturl = null;
             if ($caneditcourse && !$iscurrent) {
