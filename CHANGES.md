@@ -9,6 +9,7 @@ All notable changes to the **H5P Themer** (`local_h5pthemer`) plugin will be doc
 
 ### Changed / Performance
 - **MUC Application Caching**: Implemented a dedicated Moodle Universal Cache (MUC) definition (`resolved_config`) to cache resolved course configurations. This eliminates the need to execute multiple database queries site-wide on every eligible page render, significantly improving scalability. Cache is automatically invalidated when course, category, or global plugin settings change.
+- **Web Component Safe Initialization**: Refactored `amd/src/settings.js` to patch `getAttribute` exclusively on `PickerClass.prototype` rather than the global `HTMLElement.prototype`, preventing any prototype pollution or side-effects on native DOM elements.
 
 ## [v0.6.0] - 2026-09-30
 
